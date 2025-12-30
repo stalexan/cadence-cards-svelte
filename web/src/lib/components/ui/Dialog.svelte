@@ -58,10 +58,10 @@
 			onkeydown={handleKeydown}
 			role="presentation"
 		>
-		<div
-			class="pointer-events-none fixed inset-0 bg-gray-500/30 transition-opacity"
-			aria-hidden="true"
-		></div>
+			<div
+				class="pointer-events-none fixed inset-0 bg-gray-500/30 transition-opacity"
+				aria-hidden="true"
+			></div>
 
 			<!-- This element is to trick the browser into centering the modal contents. -->
 			<span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true"

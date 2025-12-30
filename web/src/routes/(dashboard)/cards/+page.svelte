@@ -1,6 +1,16 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { Plus, FileText, Filter, RotateCcw, ArrowUp, ArrowDown, Eye, Pencil, Trash2 } from 'lucide-svelte';
+	import {
+		Plus,
+		FileText,
+		Filter,
+		RotateCcw,
+		ArrowUp,
+		ArrowDown,
+		Eye,
+		Pencil,
+		Trash2
+	} from 'lucide-svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
 	import { getPaginationInfo } from '$lib/utils';
@@ -337,7 +347,10 @@
 				<table class="min-w-full divide-y divide-gray-200">
 					<thead class="bg-gray-50">
 						<tr>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								<button
 									onclick={() => toggleSort('front')}
 									class="inline-flex items-center gap-1 hover:text-gray-700"
@@ -352,7 +365,10 @@
 									{/if}
 								</button>
 							</th>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								<button
 									onclick={() => toggleSort('back')}
 									class="inline-flex items-center gap-1 hover:text-gray-700"
@@ -367,7 +383,10 @@
 									{/if}
 								</button>
 							</th>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								<button
 									onclick={() => toggleSort('priority')}
 									class="inline-flex items-center gap-1 hover:text-gray-700"
@@ -382,7 +401,10 @@
 									{/if}
 								</button>
 							</th>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								<button
 									onclick={() => toggleSort('lastSeen')}
 									class="inline-flex items-center gap-1 hover:text-gray-700"
@@ -397,13 +419,22 @@
 									{/if}
 								</button>
 							</th>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								Topic/Deck
 							</th>
-							<th scope="col" class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								Tags
 							</th>
-							<th scope="col" class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+							<th
+								scope="col"
+								class="px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase"
+							>
 								Actions
 							</th>
 						</tr>
@@ -418,14 +449,18 @@
 									{truncateText(card.back)}
 								</td>
 								<td class="px-4 py-3 text-sm">
-									<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-										{card.priority === 'A' ? 'bg-red-100 text-red-800' : 
-										 card.priority === 'B' ? 'bg-yellow-100 text-yellow-800' : 
-										 'bg-green-100 text-green-800'}">
+									<span
+										class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+										{card.priority === 'A'
+											? 'bg-red-100 text-red-800'
+											: card.priority === 'B'
+												? 'bg-yellow-100 text-yellow-800'
+												: 'bg-green-100 text-green-800'}"
+									>
 										{card.priority}
 									</span>
 								</td>
-								<td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
+								<td class="px-4 py-3 text-sm whitespace-nowrap text-gray-500">
 									{formatShortDate(card.lastSeen)}
 								</td>
 								<td class="px-4 py-3 text-sm text-gray-500">
@@ -441,7 +476,9 @@
 									{#if card.tags && card.tags.length > 0}
 										<div class="flex flex-wrap gap-1">
 											{#each card.tags.slice(0, 3) as tag (tag)}
-												<span class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+												<span
+													class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
+												>
 													{tag}
 												</span>
 											{/each}
@@ -453,7 +490,7 @@
 										<span class="text-gray-400">—</span>
 									{/if}
 								</td>
-								<td class="whitespace-nowrap px-4 py-3 text-right text-sm">
+								<td class="px-4 py-3 text-right text-sm whitespace-nowrap">
 									<div class="flex items-center justify-end space-x-2">
 										<a
 											href={`/cards/${card.id}`}

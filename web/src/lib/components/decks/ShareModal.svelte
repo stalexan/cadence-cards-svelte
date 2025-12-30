@@ -39,7 +39,9 @@
 	async function regenerateYaml() {
 		isRegenerating = true;
 		try {
-			const response = await fetch(`/api/decks/${deckId}/export?includeSm2Params=${includeSm2Params}`);
+			const response = await fetch(
+				`/api/decks/${deckId}/export?includeSm2Params=${includeSm2Params}`
+			);
 			if (!response.ok) {
 				throw new Error('Failed to export deck');
 			}
@@ -205,4 +207,3 @@
 		</button>
 	{/snippet}
 </Dialog>
-
