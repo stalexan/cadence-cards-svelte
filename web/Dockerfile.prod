@@ -65,13 +65,20 @@ RUN chmod +x /entrypoint.sh
 COPY web/package*.json ./
 
 # Install production dependencies and prisma CLI for migrations
+# Also install tsx for running TypeScript scripts (view-data.ts, etc.)
 RUN npm ci --omit=dev && \
-    npm install prisma && \
+    npm install prisma tsx && \
     npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/build ./build
 COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
+
+# Copy scripts directory for admin commands (view-data.ts, create-user.ts, etc.)
+COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
+
+# Copy source lib files that scripts depend on
+COPY --from=builder --chown=nodejs:nodejs /app/src/lib ./src/lib
 
 # Copy Prisma client and generated files
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
