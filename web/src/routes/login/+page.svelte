@@ -40,6 +40,10 @@
 				};
 			}}
 		>
+			<!-- Auth.js hidden fields for credentials provider -->
+			<input type="hidden" name="providerId" value="credentials" />
+			<input type="hidden" name="redirectTo" value="/dashboard" />
+
 			<div class="-space-y-px rounded-md shadow-sm">
 				<div>
 					<label for="email" class="sr-only">Email address</label>
