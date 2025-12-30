@@ -55,8 +55,15 @@ export const actions: Actions = {
 
 		// Make a server-side request to Auth.js signin endpoint
 		try {
-			const csrfToken = event.cookies.get('authjs.csrf-token')?.split('|')[0] || '';
-			console.log('CSRF token:', csrfToken);
+			// Auth.js uses different cookie names depending on secure mode:
+			// - Production (HTTPS): __Host-authjs.csrf-token
+			// - Development (HTTP): authjs.csrf-token
+			const csrfCookie =
+				event.cookies.get('__Host-authjs.csrf-token') ||
+				event.cookies.get('authjs.csrf-token') ||
+				'';
+			const csrfToken = csrfCookie.split('|')[0];
+			console.log('CSRF token:', csrfToken ? 'present' : 'missing');
 
 			// Send as URL-encoded form data (what browsers send)
 			const body = new URLSearchParams({
@@ -96,7 +103,10 @@ export const actions: Actions = {
 						// Decode the value - Auth.js URL-encodes cookie values in Set-Cookie headers
 						// but we need to decode them before setting via SvelteKit's cookies API
 						const rawValue = nameValue.substring(eqIndex + 1);
-						const value = name === 'authjs.callback-url' ? decodeURIComponent(rawValue) : rawValue;
+						// Handle both secure-prefixed (production) and non-prefixed (dev) cookie names
+						const isCallbackUrl =
+							name === 'authjs.callback-url' || name === '__Host-authjs.callback-url';
+						const value = isCallbackUrl ? decodeURIComponent(rawValue) : rawValue;
 
 						const cookieOptions: Parameters<typeof event.cookies.set>[2] = {
 							path: '/'
