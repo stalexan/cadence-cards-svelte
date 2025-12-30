@@ -4,7 +4,7 @@ import { prisma } from '$lib/server/db';
 import { compare } from 'bcryptjs';
 import { rateLimiter } from '$lib/server/rate-limiter';
 import { logger } from '$lib/server/logger';
-import { AUTH_SECRET } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 // Define auth-related types
 export interface AuthUser {
@@ -154,6 +154,6 @@ export const {
 			return session;
 		}
 	},
-	secret: AUTH_SECRET,
+	secret: env.AUTH_SECRET,
 	trustHost: true
 });
