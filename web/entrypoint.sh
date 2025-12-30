@@ -8,6 +8,15 @@ cleanup() {
 
 trap cleanup SIGTERM
 
+# Set APP_VERSION from VERSION file
+if [ -f /app/VERSION ]; then
+    export APP_VERSION=$(cat /app/VERSION | tr -d '\n')
+    echo "App version: $APP_VERSION"
+else
+    export APP_VERSION="unknown"
+    echo "Warning: VERSION file not found, using 'unknown'"
+fi
+
 # Generate Prisma client in development (schema may have changed)
 # In production, Prisma client is already generated during build
 if [ "$NODE_ENV" != "production" ]; then
