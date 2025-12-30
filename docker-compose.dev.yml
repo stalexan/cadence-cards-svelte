@@ -1,0 +1,39 @@
+# =============================================================================
+# DEVELOPMENT DOCKER COMPOSE OVERRIDES
+# =============================================================================
+# This file contains development-specific overrides for docker-compose.yml
+# Features:
+# - Source code mounting for live development
+# - Development-specific Dockerfiles
+# - Direct port access for localhost:5173
+# - Development command overrides
+# =============================================================================
+
+services:
+  web:
+    build:
+      dockerfile: web/Dockerfile.dev
+    ports:
+      - "5173:5173"  # Direct access at http://localhost:5173
+    volumes:
+      - ./web:/app        # Mount the source code for development
+      - ./VERSION:/app/VERSION  # Mount VERSION file from project root
+      - ./logs:/app/logs  # Mount logs directory
+      # Mask the node_modules and .svelte-kit directories from the mount. They need
+      # to come from the image.
+      - /app/node_modules
+      - /app/.svelte-kit
+      # Note: /app/build is NOT masked so npm run build works for testing
+    environment:
+      - NODE_ENV=development
+      - LOG_TO_FILES=false
+      - LOG_DIR=/app/logs
+    stdin_open: true
+    tty: true
+    # Uncomment to just keep the container running, and not run app
+    #command: sleep infinity
+
+  db:
+    ports:
+      - "127.0.0.1:55432:5432"  # Use non-default host port to avoid conflicts
+

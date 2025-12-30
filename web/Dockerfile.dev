@@ -1,0 +1,78 @@
+FROM node:24-bookworm-slim
+
+# Update apt database and upgrade packages (including glibc) to fix security vulnerabilities
+RUN apt-get update && apt-get upgrade -y
+
+# Install packages neeeded for deployed version.
+RUN apt-get install -y --no-install-recommends \
+    openssl
+    
+# Install packages used for development and debugging. 
+# Comment out when done.
+RUN apt-get install -y --no-install-recommends \
+    fd-find \
+    less \
+    net-tools \
+    postgresql-client \
+    procps \
+    ripgrep \
+    tree \
+    vim-tiny
+
+# Clean apt cache.
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install entrypoint.sh
+COPY web/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Create directories that Node will modify and set permissions.
+# Note: /app/build is created by npm run build and writes to host via volume mount
+RUN mkdir /app && chown node:node /app
+RUN mkdir /app/node_modules && chown node:node /app/node_modules
+RUN mkdir /app/.svelte-kit && chown node:node /app/.svelte-kit
+WORKDIR /app
+
+# Run as non-root user from here on
+USER node
+
+# Copy only package.json and any package-lock.json with correct ownership
+COPY --chown=node:node web/package*.json ./
+
+# Generate package-lock.json if it doesn't exist
+# Use a temporary directory under the node user's home
+RUN if [ ! -f package-lock.json ]; then \
+    echo "Generating package-lock.json" && \
+    npm install --package-lock-only && \
+    mkdir -p /home/node/tmp && \
+    cp package-lock.json /home/node/tmp/package-lock.json; \
+    fi
+
+# Install dependencies using the package-lock.json
+# We use "npm ci" versus "npm install" because:
+# - Strictly follows package-lock.json
+# - Is generally faster than npm install
+# - Provides more consistent installations
+RUN npm ci
+
+# Install npm-check-updates to be able to later update dependencies by running ncu.
+RUN npm install npm-check-updates
+
+# Copy the rest of the application
+COPY --chown=node:node web/ .
+
+# Copy VERSION file from project root
+COPY --chown=node:node VERSION ./VERSION
+
+# Generate Prisma client
+RUN npx prisma generate
+
+EXPOSE 5173
+
+ENV PORT=5173
+ENV HOSTNAME="0.0.0.0"
+
+# Start the development server
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["npm", "run", "dev", "--", "--host"]

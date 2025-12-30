@@ -1,0 +1,26 @@
+# =============================================================================
+# PRODUCTION DOCKER COMPOSE OVERRIDES
+# =============================================================================
+# This file contains production-specific overrides for docker-compose.yml
+# Features:
+# - Production-optimized settings
+# - Production-specific Dockerfiles
+# - Restart policies
+# - Production command overrides
+# - Enhanced security and logging
+# =============================================================================
+
+services:
+  web:
+    ports:
+      - "127.0.0.1:3000:3000"  # Bind to localhost only (accessed via nginx)
+    environment:
+      - NODE_ENV=production
+      - LOG_TO_FILES=false  # Disabled in production; use Docker logs (stdout/stderr)
+    restart: unless-stopped
+    # Production command - run the built application
+    command: ["npm", "start"]
+
+  db:
+    restart: unless-stopped
+

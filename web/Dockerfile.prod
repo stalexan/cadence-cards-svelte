@@ -1,0 +1,108 @@
+# =============================================================================
+# PRODUCTION DOCKERFILE FOR SVELTEKIT APPLICATION
+# =============================================================================
+# Multi-stage build for optimized production deployment
+# Stage 1: Build dependencies and application
+# Stage 2: Runtime-only production image
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage 1: Dependencies and Build
+# -----------------------------------------------------------------------------
+FROM node:24-bookworm-slim AS builder
+
+# Install system dependencies needed for build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY web/package*.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY web/ .
+
+# Copy VERSION file from project root
+COPY VERSION ./VERSION
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build the application
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Stage 2: Production Runtime
+# -----------------------------------------------------------------------------
+FROM node:24-bookworm-slim AS runner
+
+# Install runtime system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd --gid 1001 nodejs && \
+    useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nodejs
+
+# Set working directory
+WORKDIR /app
+
+# Copy entrypoint script and set permissions
+COPY web/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Copy package.json for runtime dependencies
+COPY web/package*.json ./
+
+# Install production dependencies and prisma CLI for migrations
+RUN npm ci --omit=dev && \
+    npm install prisma && \
+    npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/build ./build
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
+
+# Copy Prisma client and generated files
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
+# Fix ownership of node_modules to ensure nodejs user can access all packages
+RUN chown -R nodejs:nodejs /app/node_modules
+
+# Copy Prisma schema for migrations
+COPY --chown=nodejs:nodejs web/prisma ./prisma
+
+# Copy VERSION file from project root
+COPY --chown=nodejs:nodejs VERSION ./VERSION
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3000
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
+ENV ORIGIN=http://localhost:3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Use entrypoint and start production server
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["node", "build"]
+

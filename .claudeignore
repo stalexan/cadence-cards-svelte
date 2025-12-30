@@ -1,0 +1,13 @@
+.git/
+.vscode/
+backups/
+logs/
+tmp/
+web/.svelte-kit/
+web/build/
+web/data/
+web/logs/
+web/node_modules/
+web/tmp/
+web/*.tsbuildinfo
+.env

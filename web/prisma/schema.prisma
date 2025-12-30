@@ -1,0 +1,112 @@
+// web/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Application Models
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Optional if using OAuth providers
+  topics        Topic[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Topic {
+  id               Int      @id @default(autoincrement())
+  name             String
+  topicDescription String?
+  expertise        String?
+  focus            String?
+  contextType      String?
+  example          String?
+  question         String?
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decks            Deck[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([name, userId]) // Prevents duplicate topic names for the same user
+}
+
+model Deck {
+  id              Int      @id @default(autoincrement())
+  name            String
+  field1Label     String?  // e.g., "English" - label for front side
+  field2Label     String?  // e.g., "Spanish" - label for back side
+  isBidirectional Boolean  @default(false) // Whether to study both directions
+  topicId         Int
+  topic           Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  cards           Card[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([name, topicId]) // Prevents duplicate deck names in the same topic
+}
+
+enum CardPriority {
+  A
+  B
+  C
+}
+
+enum CardGrade {
+  INCORRECT
+  CORRECT_WITH_HESITATION
+  CORRECT_PERFECT_RECALL
+}
+
+model Card {
+  id        Int           @id @default(autoincrement())
+  deckId    Int
+  deck      Deck          @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  front     String        // Question side
+  back      String        // Answer side
+  note      String?       // Additional context shown after correct answer
+  
+  // Card metadata
+  priority  CardPriority
+  tags      String[]      @default([])
+  
+  // Optimistic locking - incremented on each update to prevent lost updates
+  version   Int           @default(0)
+  
+  // Scheduling data is now stored in Schedule table
+  schedules Schedule[]
+  
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Schedule {
+  id         Int        @id @default(autoincrement())
+  cardId     Int
+  card       Card       @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  isReversed Boolean    @default(false) // false = front→back, true = back→front
+  
+  // SM-2 Algorithm fields
+  easiness   Float      @default(2.5)
+  interval   Int        @default(1)
+  repCount   Int        @default(0)
+  grade      CardGrade? // Optional since some schedules may not have been graded yet
+  lastSeen   DateTime?
+  
+  // Optimistic locking for schedule updates
+  version    Int        @default(0)
+  
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  
+  @@unique([cardId, isReversed]) // Max one schedule per direction per card
+}
+

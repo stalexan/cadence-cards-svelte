@@ -1,0 +1,114 @@
+# Cadence Cards Development Rules
+
+## Docker-First Development Environment
+
+This project uses a **Docker-first development approach**. All development commands, including npm commands, should be run inside Docker containers.
+
+### Security Context
+
+- **Do NOT expose WSL to Node** for security reasons
+- Use Docker version installed inside WSL, **NOT Docker Desktop for Windows**
+- All Node.js and npm commands must run inside the Docker container
+
+### Running Commands
+
+To run npm commands, use one of these methods:
+
+1. **Interactive shell** (preferred for multiple commands):
+   ```bash
+   ./manage.py shell --service web
+   # Then run npm/npx commands inside the container
+   npx prisma migrate dev
+   npm run dev
+   ```
+
+2. **One-off commands** using docker compose exec:
+   ```bash
+   docker compose exec web npm install <package>
+   docker compose exec web npx prisma migrate dev
+   docker compose exec web npm run test
+   ```
+
+3. **Database shell**:
+   ```bash
+   ./manage.py db-shell
+   ```
+
+### Environment Management
+
+- **Development mode** (default): Port 5173, Vite dev server with hot reload
+- **Production mode**: Port 3000, built Node.js application
+- Set environment with `ENVIRONMENT=dev` or `ENVIRONMENT=prod` before `manage.py` commands
+- Default is development mode if not specified
+
+### Common Workflows
+
+**Starting development:**
+```bash
+./manage.py build
+./manage.py up -d
+./manage.py shell --service web
+npm run dev
+```
+
+**Database migrations:**
+```bash
+./manage.py shell --service web
+npx prisma migrate dev
+# or
+npx prisma db seed
+```
+
+**Updating dependencies:**
+```bash
+# Check for updates
+./manage.py check-updates
+
+# Safe npm updates (minor/patch only)
+./manage.py update-npm-packages
+
+# Rebuild with latest base images
+./manage.py build --pull
+```
+
+**Other operations:**
+```bash
+./manage.py restart     # Restart containers
+./manage.py down        # Stop and remove containers
+./manage.py logs        # View logs
+```
+
+## Project Structure
+
+- **Frontend & Backend**: SvelteKit (unified framework)
+- **Database**: PostgreSQL with Prisma ORM
+- **AI**: Claude.AI integration
+- **Styling**: TailwindCSS
+- **Testing**: Vitest
+
+## Code Conventions
+
+- Use TypeScript for type safety
+- Follow existing ESLint and Prettier configurations
+- Use Prisma for all database operations
+- Implement proper error handling and logging
+- Follow SvelteKit conventions for routing and API endpoints
+
+## Key Files
+
+- `manage.py` - Docker and environment management helper
+- `docker-compose.yml` - Base Docker configuration
+- `docker-compose.dev.yml` - Development overrides
+- `docker-compose.prod.yml` - Production overrides
+- `web/Dockerfile.dev` - Development container build
+- `web/Dockerfile.prod` - Production multi-stage build
+- `web/prisma/schema.prisma` - Database schema
+
+## Important Notes
+
+- Never suggest running npm/node commands directly on the host system
+- Always use the Docker container for Node.js operations
+- The `manage.py` script handles environment selection automatically
+- Volume mounts enable live code changes in development mode
+- Production uses optimized multi-stage builds without development tools
+

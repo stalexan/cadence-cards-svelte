@@ -1,0 +1,80 @@
+# =============================================================================
+# BASE DOCKER COMPOSE CONFIGURATION
+# =============================================================================
+# This is the base configuration with common settings shared across environments.
+# Environment-specific overrides are in docker-compose.dev.yml and docker-compose.prod.yml
+# =============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile.prod
+    networks:
+      default: {}
+      shared:
+        aliases:
+          - cadence-cards  # Allows nginx to connect via "cadence-cards:3000" instead of full container name
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - CLAUDE_API_URL=${CLAUDE_API_URL:-}
+      - CLAUDE_MODEL=${CLAUDE_MODEL}
+      - CLAUDE_MAX_TOKENS=1000
+      - ENABLE_PUBLIC_REGISTRATION=${ENABLE_PUBLIC_REGISTRATION:-false}
+      - ORIGIN=${ORIGIN:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+      - CHOWN
+      - NET_BIND_SERVICE
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    build:
+      context: ./postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - CHOWN
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  # Shared network for cross-project communication (allows elias2-www nginx to reach this service)
+  # IMPORTANT: This network must be created manually before starting services:
+  #   docker network create elias2-shared-network
+  # Docker Compose will NOT create external networks automatically - they must exist first.
+  shared:
+    external: true
+    name: elias2-shared-network
