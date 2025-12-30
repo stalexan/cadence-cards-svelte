@@ -10,13 +10,18 @@
 
 	let { data }: Props = $props();
 
-	// Fixed initial welcome message (not from Claude API)
-	const initialMessage: Message = {
+	// Welcome message - uses $derived to access data.topic.name reactively
+	const welcomeMessage = $derived<Message>({
 		role: 'assistant',
 		content: `Welcome! I'm here to help you learn about **${data.topic.name}**. Ask me any questions you have about this topic.`
-	};
+	});
 
-	let messages = $state<Message[]>([initialMessage]);
+	// Chat messages (user questions and Claude responses, excluding welcome)
+	let chatMessages = $state<Message[]>([]);
+
+	// All messages including welcome for display
+	const messages = $derived<Message[]>([welcomeMessage, ...chatMessages]);
+
 	let isSending = $state(false);
 	let isFirstMessage = $state(true);
 	let error = $state<string | null>(null);
@@ -27,15 +32,15 @@
 		isSending = true;
 
 		// Add user message to the list
-		messages = [...messages, { role: 'user', content: message }];
+		chatMessages = [...chatMessages, { role: 'user', content: message }];
 
 		// Create previousMessages array
 		// If this is the first message, we don't send any previous messages to API
 		// The API will handle adding the GENERAL_INSTRUCTIONS and "Understood." messages
 		let previousMessages: Message[] = [];
 		if (!isFirstMessage) {
-			// Exclude the fixed initial message from previous messages sent to API
-			previousMessages = messages.filter((_, i) => i > 0);
+			// Send chat messages (excludes welcome message) to API
+			previousMessages = chatMessages.slice();
 		}
 
 		try {
@@ -56,7 +61,7 @@
 			}
 
 			const result = await response.json();
-			messages = [...messages, { role: 'assistant', content: result.response }];
+			chatMessages = [...chatMessages, { role: 'assistant', content: result.response }];
 
 			// Mark that we've sent the first message
 			if (isFirstMessage) {
@@ -65,8 +70,8 @@
 		} catch (err) {
 			console.error('Error sending message:', err);
 			// Add error message to chat
-			messages = [
-				...messages,
+			chatMessages = [
+				...chatMessages,
 				{
 					role: 'assistant',
 					content: 'Sorry, I encountered an error. Please try again or refresh the page.'
