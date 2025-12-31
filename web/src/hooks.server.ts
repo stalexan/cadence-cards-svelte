@@ -97,9 +97,11 @@ function getClientIP(event: RequestEvent): string {
 
 	const forwarded = event.request.headers.get('x-forwarded-for');
 	if (forwarded) {
-		// X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-		// The first one is the original client
-		return forwarded.split(',')[0].trim();
+		// X-Forwarded-For can contain multiple IPs: "spoofed, proxy1, proxy2, real"
+		// Take the LAST IP - the one added by our trusted proxy (rightmost-first)
+		// This prevents attackers from spoofing via prepended values
+		const ips = forwarded.split(',').map((ip) => ip.trim()).filter(Boolean);
+		return ips[ips.length - 1];
 	}
 
 	// No proxy headers found, use the connection IP
