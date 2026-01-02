@@ -42,10 +42,15 @@ maintain it actively, but this isn't a commercial product with formal support.
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository with submodules:
    ```bash
-   git clone git@github.com:stalexan/cadence-cards.git
+   git clone --recursive git@github.com:stalexan/cadence-cards.git
    cd cadence-cards
+   ```
+
+   If you already cloned without `--recursive`, initialize the submodule:
+   ```bash
+   git submodule update --init
    ```
 
 2. Create a `.env` file from the template:
