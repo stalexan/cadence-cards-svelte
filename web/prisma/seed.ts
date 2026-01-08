@@ -2,7 +2,7 @@ import { PrismaClient, User, Topic, Deck, Card, Schedule, Prisma } from '@prisma
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'yaml';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../src/lib/server/password';
 import { Grade, Priority } from '@/lib/sm2';
 
 // Initialize Prisma client
@@ -156,7 +156,7 @@ function readYamlFile(filePath: string): YamlCard[] {
 async function createUser(email: string, name: string, password: string): Promise<User> {
 	try {
 		// Hash the password with bcrypt
-		const hashedPassword = await bcrypt.hash(password, 10);
+		const hashedPassword = await hashPassword(password);
 
 		const userData: Prisma.UserCreateInput = {
 			email,

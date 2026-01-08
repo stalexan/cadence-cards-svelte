@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/db';
-import { hash, compare } from 'bcryptjs';
+import { hashPassword, verifyPassword } from '$lib/server/password';
 
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
@@ -100,12 +100,12 @@ export const actions: Actions = {
 				return fail(404, { passwordError: 'User not found' });
 			}
 
-			const isValidPassword = await compare(currentPassword, user.password || '');
+			const isValidPassword = await verifyPassword(currentPassword, user.password || '');
 			if (!isValidPassword) {
 				return fail(400, { passwordError: 'Current password is incorrect' });
 			}
 
-			const hashedPassword = await hash(newPassword, 12);
+			const hashedPassword = await hashPassword(newPassword);
 			await prisma.user.update({
 				where: { id: userId },
 				data: { password: hashedPassword }

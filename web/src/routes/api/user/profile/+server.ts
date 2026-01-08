@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { requireAuth, handleApiError } from '$lib/server/api-helpers';
 import { prisma } from '$lib/server/db';
-import { hash, compare } from 'bcryptjs';
+import { hashPassword, verifyPassword } from '$lib/server/password';
 
 /**
  * GET /api/user/profile - Get user profile
@@ -63,7 +63,7 @@ export const PUT: RequestHandler = async (event) => {
 				return json({ message: 'Current password is required' }, { status: 400 });
 			}
 
-			const isValidPassword = await compare(validatedData.currentPassword, user.password || '');
+			const isValidPassword = await verifyPassword(validatedData.currentPassword, user.password || '');
 			if (!isValidPassword) {
 				return json({ message: 'Current password is incorrect' }, { status: 400 });
 			}
@@ -74,7 +74,7 @@ export const PUT: RequestHandler = async (event) => {
 		if (validatedData.name) updateData.name = validatedData.name;
 		if (validatedData.email) updateData.email = validatedData.email;
 		if (validatedData.newPassword) {
-			updateData.password = await hash(validatedData.newPassword, 12);
+			updateData.password = await hashPassword(validatedData.newPassword);
 		}
 
 		const updatedUser = await prisma.user.update({

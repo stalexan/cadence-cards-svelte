@@ -15,7 +15,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../src/lib/server/password';
 import * as readline from 'readline';
 import { Writable } from 'stream';
 
@@ -118,7 +118,7 @@ async function main() {
 		const password = await promptForPasswordWithConfirmation();
 
 		// Hash new password
-		const hashedPassword = await bcrypt.hash(password, 10);
+		const hashedPassword = await hashPassword(password);
 
 		// Update password
 		await prisma.user.update({

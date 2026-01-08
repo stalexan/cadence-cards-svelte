@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { prisma } from '$lib/server/db';
-import { hash } from 'bcryptjs';
+import { hashPassword } from '$lib/server/password';
 import { isPublicRegistrationEnabled } from '$lib/server/config';
 
 export const load: PageServerLoad = async (event) => {
@@ -73,7 +73,7 @@ export const actions: Actions = {
 
 		// Create user
 		try {
-			const hashedPassword = await hash(password, 12);
+			const hashedPassword = await hashPassword(password);
 			await prisma.user.create({
 				data: {
 					name,

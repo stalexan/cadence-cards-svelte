@@ -1,7 +1,7 @@
 import { SvelteKitAuth } from '@auth/sveltekit';
 import Credentials from '@auth/sveltekit/providers/credentials';
 import { prisma } from '$lib/server/db';
-import { compare } from 'bcryptjs';
+import { verifyPassword } from '$lib/server/password';
 import { rateLimiter } from '$lib/server/rate-limiter';
 import { logger } from '$lib/server/logger';
 import { env } from '$env/dynamic/private';
@@ -69,7 +69,7 @@ export const {
 					return null;
 				}
 
-				const isPasswordValid = await compare(password, user.password);
+				const isPasswordValid = await verifyPassword(password, user.password);
 
 				if (!isPasswordValid) {
 					// Record failed attempt (wrong password)
