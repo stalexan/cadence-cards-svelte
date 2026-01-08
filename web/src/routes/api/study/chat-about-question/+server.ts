@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { chatAboutQuestion } from '$lib/server/claude';
 import { z } from 'zod';
 import { requireAuth, handleApiError } from '$lib/server/api-helpers';
+import { prisma } from '$lib/server/db';
 
 // Validation schema for chatting about a question
 const chatAboutQuestionSchema = z.object({
@@ -25,12 +26,24 @@ const chatAboutQuestionSchema = z.object({
  */
 export const POST: RequestHandler = async (event) => {
 	try {
-		await requireAuth(event);
+		const userId = await requireAuth(event);
 		const body = await event.request.json();
 
 		// Validate request body
 		const { userAnswer, cardFront, cardBack, cardNote, previousMessages, topicId } =
 			chatAboutQuestionSchema.parse(body);
+
+		// Verify topic belongs to the authenticated user
+		const topic = await prisma.topic.findFirst({
+			where: {
+				id: parseInt(topicId),
+				userId
+			}
+		});
+
+		if (!topic) {
+			return json({ message: 'Topic not found' }, { status: 404 });
+		}
 
 		// Chat about question using Claude.AI
 		// The chatAboutQuestion function now handles filtering/adding context messages

@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { generateQuestion } from '$lib/server/claude';
 import { z } from 'zod';
 import { requireAuth, handleApiError } from '$lib/server/api-helpers';
+import { prisma } from '$lib/server/db';
 
 // Validation schema for generating a question
 const generateQuestionSchema = z.object({
@@ -18,11 +19,23 @@ const generateQuestionSchema = z.object({
  */
 export const POST: RequestHandler = async (event) => {
 	try {
-		await requireAuth(event);
+		const userId = await requireAuth(event);
 		const body = await event.request.json();
 
 		// Validate request body
 		const { cardFront, cardBack, cardNote, topicId } = generateQuestionSchema.parse(body);
+
+		// Verify topic belongs to the authenticated user
+		const topic = await prisma.topic.findFirst({
+			where: {
+				id: parseInt(topicId),
+				userId
+			}
+		});
+
+		if (!topic) {
+			return json({ message: 'Topic not found' }, { status: 404 });
+		}
 
 		// Generate question using Claude.AI
 		const question = await generateQuestion(cardFront, cardBack, cardNote || null, topicId);
