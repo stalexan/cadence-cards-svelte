@@ -2,6 +2,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { deckService, importService } from '$lib/server/services';
 
+// Maximum size for YAML content (1MB) to prevent DoS via memory exhaustion
+const MAX_YAML_SIZE = 1024 * 1024;
+
 export const load: PageServerLoad = async (event) => {
 	const session = await event.locals.auth();
 	if (!session?.user?.id) {
@@ -32,6 +35,12 @@ export const actions: Actions = {
 
 		if (!yamlContent?.trim()) {
 			return fail(400, { error: 'YAML content is required' });
+		}
+
+		if (yamlContent.length > MAX_YAML_SIZE) {
+			return fail(400, {
+				error: `YAML content exceeds maximum size of ${MAX_YAML_SIZE / 1024}KB`
+			});
 		}
 
 		if (!deckId) {

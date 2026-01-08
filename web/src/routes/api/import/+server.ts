@@ -4,9 +4,15 @@ import type { RequestHandler } from './$types';
 import { requireAuth, handleApiError } from '$lib/server/api-helpers';
 import { importService } from '$lib/server/services';
 
+// Maximum size for YAML content (1MB) to prevent DoS via memory exhaustion
+const MAX_YAML_SIZE = 1024 * 1024;
+
 // Validation schema for import
 const importSchema = z.object({
-	yamlContent: z.string().min(1, 'YAML content is required'),
+	yamlContent: z
+		.string()
+		.min(1, 'YAML content is required')
+		.max(MAX_YAML_SIZE, `YAML content exceeds maximum size of ${MAX_YAML_SIZE / 1024}KB`),
 	deckId: z.number().int().positive('Deck ID is required')
 });
 
