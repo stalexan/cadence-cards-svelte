@@ -56,11 +56,17 @@ const rateLimitHandle: Handle = async ({ event, resolve }) => {
 /**
  * Security headers middleware
  * Adds standard security headers to all responses
+ *
+ * Note: Content-Security-Policy (CSP) is configured in svelte.config.js using
+ * SvelteKit's built-in CSP support, which handles nonce generation automatically.
+ *
+ * X-Frame-Options is kept for compatibility with older browsers that don't
+ * support CSP's frame-ancestors directive.
  */
 const securityHeadersHandle: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
 
-	response.headers.set('X-Frame-Options', 'DENY');
+	response.headers.set('X-Frame-Options', 'DENY'); // Kept for legacy browser support (CSP frame-ancestors is primary)
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
