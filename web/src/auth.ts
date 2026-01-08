@@ -26,14 +26,7 @@ export const {
 				password: { label: 'Password', type: 'password' }
 			},
 			async authorize(credentials, request) {
-				console.log('🔐 AUTHORIZE called with credentials:', {
-					hasEmail: !!credentials?.email,
-					hasPassword: !!credentials?.password,
-					email: credentials?.email
-				});
-
 				if (!credentials?.email || !credentials?.password) {
-					console.log('❌ Missing credentials');
 					return null;
 				}
 
@@ -42,14 +35,11 @@ export const {
 
 				// Get client IP for rate limiting from middleware-set header
 				const ip: string = request.headers.get('x-client-ip') || 'unknown';
-				console.log('🔐 Attempting auth for:', { email, ip });
 
 				// Check if account is locked out
 				const accountLockout: { locked: boolean; until?: number } =
 					rateLimiter.isAccountLockedOut(email);
-				console.log('🔐 Lockout check:', accountLockout);
 				if (accountLockout.locked) {
-					console.log('❌ Account is locked');
 					logger.security('Account locked out', {
 						email,
 						ip,
@@ -66,14 +56,8 @@ export const {
 						email: email
 					}
 				});
-				console.log('🔐 User found:', {
-					found: !!user,
-					hasPassword: !!user?.password,
-					userId: user?.id
-				});
 
 				if (!user || !user.password) {
-					console.log('❌ User not found or no password');
 					// Record failed attempt (no user found)
 					rateLimiter.recordFailedAuth(ip, email);
 					logger.security('Failed login attempt - user not found', {
@@ -86,10 +70,8 @@ export const {
 				}
 
 				const isPasswordValid = await compare(password, user.password);
-				console.log('🔐 Password check:', { isValid: isPasswordValid });
 
 				if (!isPasswordValid) {
-					console.log('❌ Invalid password');
 					// Record failed attempt (wrong password)
 					rateLimiter.recordFailedAuth(ip, email);
 					logger.security('Failed login attempt - invalid password', {
@@ -110,13 +92,11 @@ export const {
 					operation: 'auth_success'
 				});
 
-				const authUser = {
+				return {
 					id: user.id.toString(),
 					email: user.email,
 					name: user.name
 				};
-				console.log('✅ Authentication successful, returning user:', authUser);
-				return authUser;
 			}
 		})
 	],
