@@ -475,7 +475,7 @@ def _check_npm_dependencies(ctx: CommandContext) -> bool:
     print_status("Checking for safe updates (minor and patch versions)...")
     try:
         cp = ctx.compose(
-            "exec", "-T", service, "npx", "ncu", "--target", "minor",
+            "exec", "-T", service, "npx", "npm-check-updates", "--target", "minor",
             capture_output=True, check=False
         )
         ncu_output = cp.stdout or ""
@@ -484,13 +484,13 @@ def _check_npm_dependencies(ctx: CommandContext) -> bool:
         if has_updates:
             print_warning("Safe updates available:")
             print(ncu_output)
-            print_status("To apply: ./manage.py shell -s web -> npx ncu --target minor -u && npm install")
+            print_status("To apply: ./manage.py shell -s web -> npx npm-check-updates --target minor -u && npm install")
         else:
             print_success("All packages are up to date")
 
         # Check major
         cp = ctx.compose(
-            "exec", "-T", service, "npx", "ncu", "--target", "major",
+            "exec", "-T", service, "npx", "npm-check-updates", "--target", "major",
             capture_output=True, check=False
         )
         major_output = cp.stdout or ""
