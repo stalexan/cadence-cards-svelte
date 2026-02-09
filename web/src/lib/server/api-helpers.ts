@@ -44,12 +44,12 @@ export function handleApiError(err: unknown, options: ErrorHandlerOptions): Resp
 	if (err instanceof z.ZodError) {
 		logger.warn('Validation error', {
 			...context,
-			validationErrors: err.errors
+			validationErrors: err.issues
 		});
 		return json(
 			{
 				message: 'Validation failed',
-				errors: err.errors.map((e) => ({
+				errors: err.issues.map((e) => ({
 					path: e.path.join('.'),
 					message: e.message
 				}))
