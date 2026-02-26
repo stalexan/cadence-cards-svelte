@@ -198,14 +198,19 @@ curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | 
 
 **NPM packages** (safe minor/patch updates):
 ```bash
-./manage.py update-npm-packages
+# 1. Check what's available
+./manage.py check-updates
+
+# 2. Apply updates (run inside container)
+./manage.py shell --service web
+# Then inside the container:
+npx npm-check-updates --target minor -u && npm install
 ```
 
-This command:
+This workflow:
 - Only updates to safe minor/patch versions (no breaking changes)
-- Requires stopping the web service first
 - Updates both `package.json` and `package-lock.json`
-- Automatically rebuilds containers
+- Run from project root; use the shell to run the commands inside the web container
 
 **Docker base images and full rebuild:**
 ```bash
@@ -219,7 +224,7 @@ This command:
 ### Recommended Maintenance Schedule
 
 - **Weekly:** Run `./manage.py check-updates` to monitor for security issues
-- **Monthly:** Update NPM packages with `./manage.py update-npm-packages`
+- **Monthly:** Update NPM packages (see "NPM packages" above: `check-updates` then shell + `npx npm-check-updates --target minor -u && npm install`)
 - **As needed:** Update Docker Scout when new versions are released
 - **After security alerts:** Rebuild images immediately with `./manage.py build --pull`
 

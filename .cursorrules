@@ -64,8 +64,8 @@ npx prisma db seed
 # Check for updates
 ./manage.py check-updates
 
-# Safe npm updates (minor/patch only)
-./manage.py update-npm-packages
+# Apply safe npm updates (minor/patch): shell in, then run:
+# npx npm-check-updates --target minor -u && npm install
 
 # Rebuild with latest base images
 ./manage.py build --pull
