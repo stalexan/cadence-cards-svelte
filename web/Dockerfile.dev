@@ -1,3 +1,7 @@
+# Use Node 24 (Active LTS). Avoid odd-numbered releases (e.g. 25) which are
+# short-lived "Current" releases that never enter LTS. Note: starting with
+# Node 27 (April 2027), every release will become LTS and the odd/even
+# distinction goes away.
 FROM node:24-trixie-slim
 
 # Update apt database and upgrade packages (including glibc) to fix security vulnerabilities
