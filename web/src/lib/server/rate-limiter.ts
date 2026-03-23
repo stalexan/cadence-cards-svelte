@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 const RATE_LIMIT_SETTINGS = {
 	// General IP rate limiting
 	DEFAULT_WINDOW_MS: 15 * 60 * 1000, // 15 minutes
-	DEFAULT_MAX_REQUESTS: 100,
+	DEFAULT_MAX_REQUESTS: 1000,
 
 	// Authentication attempt rate limiting
 	AUTH_ATTEMPT_WINDOW_MS: 30 * 60 * 1000, // 30 minutes
