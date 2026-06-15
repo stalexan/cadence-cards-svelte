@@ -5,29 +5,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Docker-First Development
 
 All Node/npm/npx/prisma commands run **inside the `web` container**, never on the host. The host has
-no Node toolchain by design (see `.cursorrules`). `manage.py` is a symlink to `scripts/manage.py`,
-which loads the `scripts/manage` **git submodule** — run `git submodule update --init` if
-`scripts/manage/` is empty.
+no Node toolchain by design (see `.cursorrules`). The repo is managed with **plain Docker Compose** —
+there is no project-specific management script.
 
 ```bash
-# Bring up the stack (ENVIRONMENT defaults to dev)
-./manage.py build
-./manage.py up -d
+# Bring up the stack (COMPOSE_FILE in .env defaults to the dev override)
+docker compose build
+docker compose up -d
+
+# One-off command in the web container
+docker compose exec web npm run lint
 
 # Open a shell in the web container to run npm/npx/prisma
-./manage.py shell --service web
-
-# One-off command without a shell
-docker compose exec web npm run lint
+docker compose exec web bash
 ```
 
-`ENVIRONMENT=dev` (default) uses `web/Dockerfile.dev` + Vite dev server on **:5173** with source
-mounted and hot reload. `ENVIRONMENT=prod` uses `web/Dockerfile.prod` (multi-stage, `npm run build`
-→ `node build`) on **:3000** behind nginx. Both compose files layer over `docker-compose.yml`.
+Environment selection is via the `COMPOSE_FILE` variable in `.env`. The default
+(`docker-compose.yml:docker-compose.dev.yml`) uses `web/Dockerfile.dev` + Vite dev server on
+**:5173** with source mounted and hot reload. Production layers the prod override —
+`docker compose -f docker-compose.yml -f docker-compose.prod.yml …` — using `web/Dockerfile.prod`
+(multi-stage, `npm run build` → `node build`) on **:3000** behind nginx.
 
-The base compose file attaches `web` to an **external** Docker network `elias2-shared-network` (so
-an external nginx can reach it). Create it first or `up` fails: `docker network create
-elias2-shared-network`.
+The base compose file attaches `web` to an **external** Docker network whose name comes from
+`SHARED_NETWORK_NAME` (default `cadence-cards-shared`), so an external nginx can reach it. Create it
+first or `up` fails: `docker network create "$SHARED_NETWORK_NAME"`.
 
 ## Common Commands (run inside the web container)
 
@@ -46,9 +47,11 @@ npx prisma generate             # Regenerate the Prisma client after schema edit
 There is **no test runner** — Vitest was removed (see commit history). Don't assume `npm test`
 exists. Verify changes with `npm run check` and `npm run lint`.
 
-`./manage.py check-updates` scans for outdated npm packages, stale base images, and CVEs (Docker
-Scout). Apply safe npm bumps from inside the container with `npx npm-check-updates --target minor -u
-&& npm install`.
+`scripts/check-updates.sh` scans for outdated npm packages and image CVEs (Docker Scout). Apply safe
+npm bumps from inside the container with `npx npm-check-updates --target minor -u && npm install`.
+Other ops helpers live in `scripts/`: `backup.sh`, `restore.sh` (DB dump/restore via
+`docker compose exec`). User/data admin are `docker compose exec -it web npx tsx scripts/<X>.ts`
+(see `web/scripts/`).
 
 ## Architecture
 

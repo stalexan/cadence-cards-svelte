@@ -16,7 +16,7 @@ To run npm commands, use one of these methods:
 
 1. **Interactive shell** (preferred for multiple commands):
    ```bash
-   ./manage.py shell --service web
+   docker compose exec web bash
    # Then run npm/npx commands inside the container
    npx prisma migrate dev
    npm run dev
@@ -26,56 +26,55 @@ To run npm commands, use one of these methods:
    ```bash
    docker compose exec web npm install <package>
    docker compose exec web npx prisma migrate dev
-   docker compose exec web npm run test
+   docker compose exec web npm run check
    ```
 
 3. **Database shell**:
    ```bash
-   ./manage.py db-shell
+   docker compose exec -it db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
    ```
 
 ### Environment Management
 
 - **Development mode** (default): Port 5173, Vite dev server with hot reload
 - **Production mode**: Port 3000, built Node.js application
-- Set environment with `ENVIRONMENT=dev` or `ENVIRONMENT=prod` before `manage.py` commands
-- Default is development mode if not specified
+- Environment is selected by the `COMPOSE_FILE` variable in `.env` (defaults to the dev
+  override). For production, pass the files explicitly:
+  `docker compose -f docker-compose.yml -f docker-compose.prod.yml …`
 
 ### Common Workflows
 
-**Starting development:**
+**Starting development** (uses `COMPOSE_FILE` from `.env`):
 ```bash
-./manage.py build
-./manage.py up -d
-./manage.py shell --service web
-npm run dev
+docker compose build
+docker compose up -d
+docker compose exec web bash
 ```
 
 **Database migrations:**
 ```bash
-./manage.py shell --service web
-npx prisma migrate dev
+docker compose exec web npx prisma migrate dev
 # or
-npx prisma db seed
+docker compose exec web npx prisma db seed
 ```
 
 **Updating dependencies:**
 ```bash
 # Check for updates
-./manage.py check-updates
+scripts/check-updates.sh
 
-# Apply safe npm updates (minor/patch): shell in, then run:
-# npx npm-check-updates --target minor -u && npm install
+# Apply safe npm updates (minor/patch):
+docker compose exec web sh -c 'npx npm-check-updates --target minor -u && npm install'
 
 # Rebuild with latest base images
-./manage.py build --pull
+docker compose build --pull
 ```
 
 **Other operations:**
 ```bash
-./manage.py restart     # Restart containers
-./manage.py down        # Stop and remove containers
-./manage.py logs        # View logs
+docker compose restart      # Restart containers
+docker compose down         # Stop and remove containers
+docker compose logs -f      # View logs
 ```
 
 ## Project Structure
@@ -84,7 +83,6 @@ npx prisma db seed
 - **Database**: PostgreSQL with Prisma ORM
 - **AI**: Claude.AI integration
 - **Styling**: TailwindCSS
-- **Testing**: Vitest
 
 ## Code Conventions
 
@@ -96,7 +94,6 @@ npx prisma db seed
 
 ## Key Files
 
-- `manage.py` - Docker and environment management helper
 - `docker-compose.yml` - Base Docker configuration
 - `docker-compose.dev.yml` - Development overrides
 - `docker-compose.prod.yml` - Production overrides
@@ -108,7 +105,7 @@ npx prisma db seed
 
 - Never suggest running npm/node commands directly on the host system
 - Always use the Docker container for Node.js operations
-- The `manage.py` script handles environment selection automatically
+- The `COMPOSE_FILE` variable in `.env` handles environment selection
 - Volume mounts enable live code changes in development mode
 - Production uses optimized multi-stage builds without development tools
 

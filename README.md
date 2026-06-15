@@ -30,8 +30,8 @@ maintain it actively, but this isn't a commercial product with formal support.
 - **Authentication:** Auth.js (@auth/sveltekit)
 - **AI Integration:** Claude.AI API
 - **Build Tool:** Vite
-- **Environment Management:** `manage.py` helper commands
-- **Development Tools:** ESLint, Prettier, TypeScript, Vitest
+- **Orchestration:** Docker Compose
+- **Development Tools:** ESLint, Prettier, TypeScript
 
 ## Getting Started
 
@@ -42,15 +42,10 @@ maintain it actively, but this isn't a commercial product with formal support.
 
 ### Installation
 
-1. Clone the repository with submodules:
+1. Clone the repository:
    ```bash
-   git clone --recursive git@github.com:stalexan/cadence-cards.git
+   git clone git@github.com:stalexan/cadence-cards.git
    cd cadence-cards
-   ```
-
-   If you already cloned without `--recursive`, initialize the submodule:
-   ```bash
-   git submodule update --init
    ```
 
 2. Create a `.env` file from the template:
@@ -63,43 +58,58 @@ maintain it actively, but this isn't a commercial product with formal support.
    - Add your Claude.AI API key for `CLAUDE_API_KEY`
    - Set secure passwords for PostgreSQL
 
-4. Build and start the development environment:
+   `.env` also configures orchestration: `COMPOSE_FILE` selects which compose files are
+   layered (defaults to the **development** stack) and `SHARED_NETWORK_NAME` names the external
+   network the web container joins.
+
+4. Create the external Docker network the web container attaches to (only needed once). The
+   name comes from `SHARED_NETWORK_NAME` in `.env`:
    ```bash
-   ./manage.py build
-   ./manage.py up -d
-   ```
-   
-   Or explicitly set the environment:
-   ```bash
-   ENVIRONMENT=dev ./manage.py build
-   ENVIRONMENT=dev ./manage.py up -d
+   docker network create "$(grep -E '^SHARED_NETWORK_NAME=' .env | cut -d= -f2)"
+   # or simply: docker network create cadence-cards-shared
    ```
 
-5. Open a shell in the running app environment:
+5. Build and start the development environment (uses `COMPOSE_FILE` from `.env`):
    ```bash
-   ./manage.py shell --service web
+   docker compose build
+   docker compose up -d
    ```
 
-6. Run the database migrations:
+6. Run the database migrations (inside the running web container):
    ```bash
-   npx prisma migrate dev
+   docker compose exec web npx prisma migrate dev
    ```
 
 7. Seed the database with sample data (optional):
    ```bash
-   npx prisma db seed
+   docker compose exec web npx prisma db seed
    ```
 
-8. Start the development server:
-   ```bash
-   npm run dev
-   ```
+8. Access the application at http://localhost:5173
 
-9. Access the application at http://localhost:5173
+   The Vite dev server (`npm run dev`) starts automatically inside the container. To run other
+   commands, open a shell in the web container with `docker compose exec web bash`.
 
 ## Development vs Production
 
-The project supports both development and production environments.
+The project supports both development and production environments via layered Docker Compose
+files: the base `docker-compose.yml` plus an environment override
+(`docker-compose.dev.yml` or `docker-compose.prod.yml`).
+
+The simplest way to select an environment is the `COMPOSE_FILE` variable in `.env`, which a
+bare `docker compose` command reads automatically. The default in `.env.example` selects
+development:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+```
+
+For production, either change `COMPOSE_FILE` accordingly or pass the files explicitly on each
+command:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
 
 ### Port Configuration
 
@@ -125,14 +135,14 @@ output directly.
   - Hot reload enabled
   - Development tools included
 
-**Start development:**
+**Start development** (with the default `COMPOSE_FILE` from `.env`):
 ```bash
-./manage.py build
-./manage.py up -d
-# or explicitly:
-ENVIRONMENT=dev ./manage.py build
-ENVIRONMENT=dev ./manage.py up -d
+docker compose build
+docker compose up -d
 ```
+
+In development, source is mounted into the container and migrations are **not** run
+automatically — apply them with `docker compose exec web npx prisma migrate dev`.
 
 ### Production Mode
 
@@ -141,43 +151,69 @@ ENVIRONMENT=dev ./manage.py up -d
   - Optimized multi-stage Docker build
   - Production build with `npm run build`
   - Restart policies enabled
+  - Database migrations applied automatically on startup (`npx prisma migrate deploy` in
+    `web/entrypoint.sh`)
 
 **Start production:**
 ```bash
-ENVIRONMENT=prod ./manage.py build
-ENVIRONMENT=prod ./manage.py up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
-**Note:** Configure your reverse proxy to forward requests to the application container.
+**Note:** Configure your reverse proxy to forward requests to the application container. It
+reaches the container over the external `SHARED_NETWORK_NAME` network via the
+`cadence-cards` alias (e.g. `cadence-cards:3000`).
 
-## Management Scripts
+## Maintenance & Admin
 
-The project includes a `manage.py` helper for common Docker and environment tasks:
+Common operational tasks run through plain `docker compose`. The repository also ships a few
+dependency-free sample scripts in `scripts/` that wrap these commands — feel free to adapt
+them for your own deployments.
 
-- **Environment selection:** Reads `ENVIRONMENT` variable (dev/prod) to
-  determine configuration
-- **Docker operations:** Build, up, down, restart containers
-- **Shell access:** Open interactive shells in running containers
-- **Database operations:** Backup, restore, user management
-- **Update checking:** Check for updates to dependencies and scan for security vulnerabilities
+### Container operations
 
-Run `./manage.py --help` for available commands.
+```bash
+docker compose ps                 # List containers
+docker compose logs -f web        # Follow web logs
+docker compose restart web        # Restart a service
+docker compose down               # Stop and remove containers
+docker compose exec web bash      # Open a shell in the web container
+```
+
+### Database backup & restore
+
+```bash
+scripts/backup.sh                 # -> backups/backup-<timestamp>.sql.gz
+scripts/restore.sh backups/backup-<timestamp>.sql.gz
+```
+
+### User & data administration
+
+User and data management are implemented as TypeScript scripts under `web/scripts/`, run with
+`tsx` inside the web container:
+
+```bash
+docker compose exec -it web npx tsx scripts/create-user.ts
+docker compose exec -it web npx tsx scripts/reset-password.ts
+docker compose exec -it web npx tsx scripts/delete-user.ts
+docker compose exec -it web npx tsx scripts/view-data.ts      # list users/topics/decks/cards
+```
 
 ## Keeping Dependencies Updated
 
 ### Automated Update Checks
 
-Check for updates and security vulnerabilities:
+Check for outdated npm packages and image CVEs:
 
 ```bash
-./manage.py check-updates
+scripts/check-updates.sh
 ```
 
-This command checks:
-- **Docker Scout version:** Verifies Docker Scout CLI is up to date
-- **Docker base images:** Checks if newer versions of base images are available
-- **NPM packages:** Identifies outdated JavaScript dependencies
-- **Security vulnerabilities:** Scans images for high/critical CVEs using Docker Scout
+This script checks:
+- **NPM packages:** Identifies outdated JavaScript dependencies (via `npm-check-updates` in
+  the web container)
+- **Security vulnerabilities:** Scans the built images for CVEs using Docker Scout (if
+  `docker scout` is installed)
 
 ### Updating Components
 
@@ -199,34 +235,32 @@ curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | 
 **NPM packages** (safe minor/patch updates):
 ```bash
 # 1. Check what's available
-./manage.py check-updates
+scripts/check-updates.sh
 
-# 2. Apply updates (run inside container)
-./manage.py shell --service web
-# Then inside the container:
-npx npm-check-updates --target minor -u && npm install
+# 2. Apply updates (run inside the web container)
+docker compose exec web sh -c 'npx npm-check-updates --target minor -u && npm install'
 ```
 
 This workflow:
 - Only updates to safe minor/patch versions (no breaking changes)
 - Updates both `package.json` and `package-lock.json`
-- Run from project root; use the shell to run the commands inside the web container
+- Runs inside the web container, where the Node toolchain lives
 
 **Docker base images and full rebuild:**
 ```bash
 # Pull latest base images and rebuild
-./manage.py build --pull
+docker compose build --pull
 
 # Or for a completely fresh build:
-./manage.py build --no-cache --pull
+docker compose build --no-cache --pull
 ```
 
 ### Recommended Maintenance Schedule
 
-- **Weekly:** Run `./manage.py check-updates` to monitor for security issues
-- **Monthly:** Update NPM packages (see "NPM packages" above: `check-updates` then shell + `npx npm-check-updates --target minor -u && npm install`)
+- **Weekly:** Run `scripts/check-updates.sh` to monitor for security issues
+- **Monthly:** Update NPM packages (see "NPM packages" above)
 - **As needed:** Update Docker Scout when new versions are released
-- **After security alerts:** Rebuild images immediately with `./manage.py build --pull`
+- **After security alerts:** Rebuild images immediately with `docker compose build --pull`
 
 ## Project Structure
 

@@ -1,3 +1,0 @@
-[submodule "scripts/manage"]
-	path = scripts/manage
-	url = git@github.com:stalexan/manage-docker.git

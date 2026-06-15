@@ -416,10 +416,7 @@ async function main(): Promise<void> {
 		// Check if this is a "table does not exist" error
 		if (errorMessage.includes('does not exist in the current database')) {
 			console.error('\n❌ Database Error: Tables have not been created yet.\n');
-			console.error('To fix this, run the following commands:\n');
-			console.error('  ./manage.py shell --service web');
-			console.error('  npx prisma migrate dev\n');
-			console.error('Or run directly:');
+			console.error('To fix this, run:\n');
 			console.error('  docker compose exec web npx prisma migrate dev\n');
 			process.exit(1);
 		}

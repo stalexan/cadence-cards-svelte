@@ -71,10 +71,12 @@ volumes:
   postgres_data:
 
 networks:
-  # Shared network for cross-project communication (allows elias2-www nginx to reach this service)
-  # IMPORTANT: This network must be created manually before starting services:
-  #   docker network create elias2-shared-network
+  # Shared network for cross-project communication (e.g. so an external nginx reverse proxy
+  # can reach this service via the "cadence-cards" alias above). The name is configurable via
+  # SHARED_NETWORK_NAME so this repo is not tied to any particular surrounding deployment.
+  # IMPORTANT: This network is external and must be created manually before starting services:
+  #   docker network create "${SHARED_NETWORK_NAME:-cadence-cards-shared}"
   # Docker Compose will NOT create external networks automatically - they must exist first.
   shared:
     external: true
-    name: elias2-shared-network
+    name: ${SHARED_NETWORK_NAME:-cadence-cards-shared}
