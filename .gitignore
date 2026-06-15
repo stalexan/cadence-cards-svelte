@@ -1,4 +1,10 @@
 __pycache__/
 backups/
+build/
+logs/
 tmp/
+web/.svelte-kit/
+web/data/
+web/node_modules/
+web/*.tsbuildinfo
 .env

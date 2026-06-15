@@ -5,8 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Docker-First Development
 
 All Node/npm/npx/prisma commands run **inside the `web` container**, never on the host. The host has
-no Node toolchain by design (see `.cursorrules`). The repo is managed with **plain Docker Compose** —
-there is no project-specific management script.
+no Node toolchain by design — this is a deliberate security boundary: the host is never exposed to
+Node, and the Docker engine used is the one installed on the Linux host itself (not a desktop Docker
+proxy). The repo is managed with **plain Docker Compose** — there is no project-specific management
+script.
 
 ```bash
 # Bring up the stack (COMPOSE_FILE in .env defaults to the dev override)
