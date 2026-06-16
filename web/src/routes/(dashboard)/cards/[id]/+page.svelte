@@ -285,8 +285,7 @@
 								rows="5"
 								bind:value={editedCard.front}
 								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-								required
-							></textarea>
+								required></textarea>
 						</div>
 
 						<div>
@@ -302,8 +301,7 @@
 								rows="5"
 								bind:value={editedCard.back}
 								class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-								required
-							></textarea>
+								required></textarea>
 						</div>
 					</div>
 

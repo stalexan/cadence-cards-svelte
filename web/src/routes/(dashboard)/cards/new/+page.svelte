@@ -202,8 +202,7 @@
 							bind:value={front}
 							class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 							placeholder="Question or prompt"
-							required
-						></textarea>
+							required></textarea>
 					</div>
 
 					<div>
@@ -220,8 +219,7 @@
 							bind:value={back}
 							class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 							placeholder="Answer"
-							required
-						></textarea>
+							required></textarea>
 					</div>
 				</div>
 

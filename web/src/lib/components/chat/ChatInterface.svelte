@@ -115,8 +115,7 @@
 							{placeholder}
 							disabled={isLoading || disableInput}
 							class="block max-h-[150px] min-h-[42px] w-full resize-none overflow-hidden rounded-lg border-gray-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500 sm:text-sm"
-							rows="1"
-						></textarea>
+							rows="1"></textarea>
 					</div>
 					<button
 						type="submit"

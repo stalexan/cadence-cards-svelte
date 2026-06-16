@@ -147,8 +147,7 @@
 			class="block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 			placeholder="Provide examples of concepts, explanations, or question-answer pairs for this topic."
 			rows={10}
-			disabled={isSubmitting}
-		></textarea>
+			disabled={isSubmitting}></textarea>
 		<p class="mt-1 text-xs text-gray-500">
 			Simplified examples to help Claude understand how to tutor this topic.
 		</p>
@@ -165,8 +164,7 @@
 			class="block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 			placeholder="Custom prompt for generating questions from flashcards. Leave blank to use the default."
 			rows={10}
-			disabled={isSubmitting}
-		></textarea>
+			disabled={isSubmitting}></textarea>
 		<p class="mt-1 text-xs text-gray-500">
 			Customize how questions are generated from flashcards. The card content will be automatically
 			added at the end.

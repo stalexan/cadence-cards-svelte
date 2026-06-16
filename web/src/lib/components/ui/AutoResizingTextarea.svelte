@@ -50,5 +50,4 @@
 	{placeholder}
 	class={className}
 	style="min-height: {minHeight}px; resize: vertical;"
-	{disabled}
-></textarea>
+	{disabled}></textarea>
