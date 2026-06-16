@@ -40,14 +40,17 @@ npm run build        # Production build
 npm run lint         # prettier --check . && eslint .
 npm run format       # prettier --write .
 npm run check        # svelte-kit sync && svelte-check (typecheck)
+npm run test         # vitest run (node-only unit tests)
+npm run test:watch   # vitest in watch mode
 
 npx prisma migrate dev          # Create/apply a migration against the dev DB
 npx prisma db seed              # Seed sample data (tsx prisma/seed.ts)
 npx prisma generate             # Regenerate the Prisma client after schema edits
 ```
 
-There is **no test runner** — Vitest was removed (see commit history). Don't assume `npm test`
-exists. Verify changes with `npm run check` and `npm run lint`.
+Testing uses **Vitest** (node-only, no browser/Playwright project — that stack caused the original
+removal). Tests are co-located with source as `*.test.ts` and cover pure logic (`sm2`, `yaml-utils`,
+`utils`). Run them with `npm run test`. Always also verify with `npm run check` and `npm run lint`.
 
 `scripts/check-updates.sh` scans for outdated npm packages and image CVEs (Docker Scout). Apply safe
 npm bumps from inside the container with `npx npm-check-updates --target minor -u && npm install`.

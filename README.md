@@ -164,6 +164,17 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 reaches the container over the external `SHARED_NETWORK_NAME` network via the
 `cadence-cards` alias (e.g. `cadence-cards:3000`).
 
+## Testing
+
+Unit tests run with Vitest (node-only) inside the web container:
+
+```bash
+docker compose exec web npm run test
+```
+
+See [docs/TESTING.md](docs/TESTING.md) for watch and coverage modes, the configuration, and how to
+add new tests.
+
 ## Maintenance & Admin
 
 Common operational tasks run through plain `docker compose`. The repository also ships a few
