@@ -17,8 +17,7 @@ export async function getInitialChatMessage(topicName: string, topicId: string):
 
 		return await generateText({
 			system: prompts.IDENTITY,
-			messages: [{ role: 'user', content: prompts.GENERAL_INSTRUCTIONS }],
-			temperature: 0.7
+			messages: [{ role: 'user', content: prompts.GENERAL_INSTRUCTIONS }]
 		});
 	} catch (error) {
 		console.error('Error generating initial message:', error);
@@ -52,8 +51,7 @@ export async function chatAboutTopic(
 
 	return await generateText({
 		system: prompts.IDENTITY,
-		messages,
-		temperature: 0.7
+		messages
 	});
 }
 
@@ -92,8 +90,7 @@ Place the question in an XML tag called question.`;
 				content: 'I will help generate a practice question.'
 			},
 			{ role: 'user', content: prompt }
-		],
-		temperature: 0.7
+		]
 	});
 
 	return extractQuestionFromXML(response);

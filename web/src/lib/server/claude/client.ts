@@ -41,17 +41,17 @@ export interface ClaudeMessageOptions {
 	system?: string;
 	messages: Array<{ role: 'user' | 'assistant'; content: string }>;
 	max_tokens?: number;
-	temperature?: number;
+	effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 }
 
 // Core API call function
 export async function generateMessage(options: ClaudeMessageOptions): Promise<Anthropic.Message> {
 	const {
-		model = env.CLAUDE_MODEL || 'claude-sonnet-4-20250514',
+		model = env.CLAUDE_MODEL || 'claude-opus-4-8',
 		system = '',
 		messages,
 		max_tokens,
-		temperature = 0.7
+		effort = 'high'
 	} = options;
 
 	// Use environment variable for max_tokens if not provided
@@ -74,7 +74,7 @@ export async function generateMessage(options: ClaudeMessageOptions): Promise<An
 			contentLength: m.content.length
 		})),
 		maxTokens: maxTokensToUse,
-		temperature,
+		effort,
 		operation: 'claude_api_request'
 	});
 
@@ -83,7 +83,8 @@ export async function generateMessage(options: ClaudeMessageOptions): Promise<An
 			model,
 			system,
 			max_tokens: maxTokensToUse,
-			temperature,
+			thinking: { type: 'adaptive' },
+			output_config: { effort },
 			messages
 		});
 
@@ -112,7 +113,7 @@ export async function generateMessage(options: ClaudeMessageOptions): Promise<An
 			duration,
 			maxTokens: maxTokensToUse,
 			messageCount: messages.length,
-			temperature,
+			effort,
 			operation: 'claude_api_request'
 		});
 

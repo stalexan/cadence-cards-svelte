@@ -66,7 +66,7 @@ export interface ClaudeMessageOptions {
   system?: string;  // System prompt defining Claude's role
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   max_tokens?: number;
-  temperature?: number;
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
 }
 
 // Main API call function
@@ -86,9 +86,9 @@ export async function generateText(
 ```
 
 **Configuration**:
-- Model: `claude-sonnet-4-20250514` (configurable via `CLAUDE_MODEL` env var)
-- Default temperature: `0.7`
-- Default max_tokens: `1000` (configurable via `CLAUDE_MAX_TOKENS` env var)
+- Model: `claude-opus-4-8` (configurable via `CLAUDE_MODEL` env var)
+- Adaptive thinking with default effort: `high` (`output_config.effort`, configurable per call)
+- Default max_tokens: `4000` (configurable via `CLAUDE_MAX_TOKENS` env var)
 - API key: `CLAUDE_API_KEY` environment variable
 
 **Features**:
@@ -137,15 +137,16 @@ Claude uses the Messages API format:
 
 ```typescript
 {
-  model: "claude-sonnet-4-20250514",
+  model: "claude-opus-4-8",
   system: "You are a Spanish tutor...",  // System prompt
   messages: [
     { role: "user", content: "..." },
     { role: "assistant", content: "..." },
     { role: "user", content: "..." }
   ],
-  max_tokens: 1000,
-  temperature: 0.7
+  max_tokens: 4000,
+  thinking: { type: "adaptive" },
+  output_config: { effort: "high" }
 }
 ```
 
@@ -207,7 +208,7 @@ await generateMessage({
     role: "user", 
     content: "I need your help creating a flashcard... User instruction: Create a card about the verb 'hablar'" 
   }],
-  temperature: 0.7
+  effort: "high"
 });
 ```
 
@@ -719,14 +720,11 @@ Required configuration:
 # API Key (required)
 CLAUDE_API_KEY=sk-ant-...
 
-# Model (optional, defaults to claude-sonnet-4-20250514)
-CLAUDE_MODEL=claude-sonnet-4-20250514
+# Model (optional, defaults to claude-opus-4-8)
+CLAUDE_MODEL=claude-opus-4-8
 
-# Max tokens (optional, defaults to 1000)
-CLAUDE_MAX_TOKENS=1000
-
-# API URL (optional, for testing/proxies)
-CLAUDE_API_URL=https://api.anthropic.com
+# Max tokens (optional, defaults to 4000)
+CLAUDE_MAX_TOKENS=4000
 ```
 
 ## Error Handling
