@@ -164,7 +164,8 @@ export function importCardsFromYaml(yamlContent: string): {
 		return { valid: validCards, invalid: invalidCards };
 	} catch (error: unknown) {
 		throw new Error(
-			`Error parsing YAML: ${error instanceof Error ? error.message : String(error)}`
+			`Error parsing YAML: ${error instanceof Error ? error.message : String(error)}`,
+			{ cause: error }
 		);
 	}
 }

@@ -137,7 +137,7 @@ export class TopicService {
 				Array.isArray(error.meta.target) &&
 				error.meta.target.includes('name')
 			) {
-				throw new Error('A topic with this name already exists');
+				throw new Error('A topic with this name already exists', { cause: error });
 			}
 			throw error;
 		}
@@ -181,7 +181,7 @@ export class TopicService {
 				Array.isArray(error.meta.target) &&
 				error.meta.target.includes('name')
 			) {
-				throw new Error('A topic with this name already exists');
+				throw new Error('A topic with this name already exists', { cause: error });
 			}
 			throw error;
 		}

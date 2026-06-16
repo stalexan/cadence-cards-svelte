@@ -180,7 +180,9 @@ export class DeckService {
 				Array.isArray(error.meta.target) &&
 				error.meta.target.includes('name')
 			) {
-				throw new Error('A deck with this name already exists in this topic');
+				throw new Error('A deck with this name already exists in this topic', {
+					cause: error
+				});
 			}
 			throw error;
 		}
@@ -294,7 +296,9 @@ export class DeckService {
 				Array.isArray(error.meta.target) &&
 				error.meta.target.includes('name')
 			) {
-				throw new Error('A deck with this name already exists in this topic');
+				throw new Error('A deck with this name already exists in this topic', {
+					cause: error
+				});
 			}
 			throw error;
 		}
