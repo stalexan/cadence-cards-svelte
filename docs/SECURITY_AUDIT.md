@@ -4,16 +4,13 @@ Known npm audit findings and their status. Last reviewed: 2026-06-16.
 
 ## Summary
 
-`npm audit` reports **8 vulnerabilities** (4 low, 4 high). None require immediate
-action: the high-severity items have no real exposure for this app's
-Linux/Docker deployment, and every remaining finding clears itself when the
-corresponding major dependency upgrade (Vite 7→8, SvelteKit 2→3) is taken
-deliberately. `npm audit fix --force` is **not** safe here — it would downgrade
-`@sveltejs/kit` to `0.0.30` and pull in an unvetted `vite@8` major.
+`npm audit` reports **4 vulnerabilities** (4 low), all the `cookie` finding
+below. It does not require immediate action and clears when SvelteKit ships a
+`cookie@^0.7.0` patch (or with SvelteKit 3.0). `npm audit fix --force` is **not**
+safe here — it would downgrade `@sveltejs/kit` to `0.0.30`.
 
 | Finding | Severity | Real exposure | Cleared by |
 | --- | --- | --- | --- |
-| `esbuild` 0.17–0.28 | High ×4 | None (Deno-only / Windows-dev-server-only; dev-time dep) | Vite 7→8 + vite-plugin-svelte 6→7 |
 | `cookie` <0.7.0 | Low ×4 | Low (SvelteKit owns cookie serialization) | A future SvelteKit 2.x patch, or SvelteKit 3.0 |
 
 ## Resolved
@@ -28,7 +25,7 @@ Quadratic-complexity DoS in merge-key handling via repeated aliases. Bumped
 `js-yaml` 4.1.1 → 4.2.0 via `npm audit fix` (semver-compatible, no `--force`).
 Only `web/package-lock.json` changed; `npm run check` and `npm run test` pass.
 
-## esbuild 0.17.0–0.28.0 (High)
+### esbuild 0.17.0–0.28.0 (High) — fixed 2026-06-16
 
 - **Advisories**:
   [GHSA-gv7w-rqvm-qjhr](https://github.com/advisories/GHSA-gv7w-rqvm-qjhr)
@@ -40,18 +37,13 @@ Only `web/package-lock.json` changed; `npm run check` and `npm run test` pass.
 - **Affected packages**: `vite`, `@sveltejs/vite-plugin-svelte`,
   `@sveltejs/vite-plugin-svelte-inspector`
 
-**Why this is acceptable**: `esbuild` is a build/dev-time dependency only — it is
-not part of the production runtime (`node build` runs the compiled output). Both
-advisories require conditions this project never meets: the first is specific to
-the Deno module loader (we run Node, not Deno), and the second is an arbitrary
-file read exploitable only against the **Windows** dev server. Development and
-production both run on Linux in Docker, so neither advisory is reachable.
-
-**Resolution**: Clears with the planned **Vite 7→8** upgrade (which bumps
-`esbuild` past the affected range), coordinated with
-`@sveltejs/vite-plugin-svelte` 6→7. Tracked as a deliberate major upgrade, not a
-hotfix. `npm audit fix --force` would install `vite@8.0.16` as an unvetted
-breaking change.
+Both advisories were already unreachable here — `esbuild` is a build/dev-time
+dependency (not in the `node build` production runtime), the first advisory is
+Deno-specific (we run Node), and the second is a Windows-dev-server file read
+(we develop and deploy on Linux in Docker). Resolved regardless by upgrading
+**Vite 7→8** (8.0.16) together with **`@sveltejs/vite-plugin-svelte` 6→7**
+(7.1.2), which moved `esbuild` past the affected range. Verified with
+`npm run check`, `npm run build`, `npm run test`, and a dev-server smoke test.
 
 ## cookie <0.7.0 (Low)
 
