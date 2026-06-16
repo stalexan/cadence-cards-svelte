@@ -63,7 +63,10 @@ export const PUT: RequestHandler = async (event) => {
 				return json({ message: 'Current password is required' }, { status: 400 });
 			}
 
-			const isValidPassword = await verifyPassword(validatedData.currentPassword, user.password || '');
+			const isValidPassword = await verifyPassword(
+				validatedData.currentPassword,
+				user.password || ''
+			);
 			if (!isValidPassword) {
 				return json({ message: 'Current password is incorrect' }, { status: 400 });
 			}
