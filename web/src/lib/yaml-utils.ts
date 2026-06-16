@@ -15,7 +15,10 @@ export const YamlCardSchema = z.object({
 		.nullable()
 		.optional(),
 	RepCount: z.number().int().min(0).optional().default(0),
-	Easiness: z.number().min(1.3).max(2.5).optional().default(2.5),
+	// SM-2 easiness has a 1.3 floor but no upper bound — repeated perfect recall pushes it
+	// above the 2.5 starting value (see Math.max(1.3, ...) in sm2.ts). Capping it here would
+	// reject exported well-practiced cards on re-import.
+	Easiness: z.number().min(1.3).optional().default(2.5),
 	Interval: z.number().int().min(1).optional().default(1),
 	Tags: z.array(z.string()).optional().default([]),
 	// Reverse schedule parameters (for bidirectional decks)
@@ -25,7 +28,7 @@ export const YamlCardSchema = z.object({
 		.nullable()
 		.optional(),
 	ReverseRepCount: z.number().int().min(0).optional().default(0),
-	ReverseEasiness: z.number().min(1.3).max(2.5).optional().default(2.5),
+	ReverseEasiness: z.number().min(1.3).optional().default(2.5),
 	ReverseInterval: z.number().int().min(1).optional().default(1)
 });
 

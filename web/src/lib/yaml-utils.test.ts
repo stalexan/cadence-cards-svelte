@@ -16,8 +16,10 @@ const sampleCards: DatabaseCard[] = [
 		lastSeen: new Date('2024-01-15T00:00:00.000Z'),
 		priority: Priority.A,
 		grade: Grade.CORRECT_PERFECT_RECALL,
+		// Above the 2.5 starting value — SM-2 raises easiness past 2.5 on repeated perfect
+		// recall, and such cards must survive an export/import roundtrip.
 		repCount: 3,
-		easiness: 2.5,
+		easiness: 2.7,
 		interval: 16,
 		tags: ['french', 'greetings']
 	},
@@ -75,7 +77,8 @@ describe('exportCardsToYaml / importCardsFromYaml roundtrip', () => {
 		expect(valid[0].LastSeen).toBe('2024-01-15');
 		expect(valid[0].Grade).toBe(Grade.CORRECT_PERFECT_RECALL);
 		expect(valid[0].RepCount).toBe(3);
-		expect(valid[0].Easiness).toBe(2.5);
+		// Easiness above the 2.5 starting value must not be rejected (no upper cap in schema).
+		expect(valid[0].Easiness).toBe(2.7);
 		expect(valid[0].Interval).toBe(16);
 		// Null lastSeen exports as null and survives the roundtrip.
 		expect(valid[1].LastSeen).toBeNull();
@@ -97,6 +100,19 @@ describe('importCardsFromYaml validation', () => {
 		expect(valid[0].Front).toBe('Good');
 		expect(invalid).toHaveLength(1);
 		expect(invalid[0].error).toContain('Card at index 1');
+	});
+
+	it('accepts an easiness above the 2.5 starting value (no upper cap)', () => {
+		const yaml = `
+- Front: Practiced
+  Back: Card
+  Priority: A
+  Easiness: 3.2
+`;
+		const { valid, invalid } = importCardsFromYaml(yaml);
+
+		expect(invalid).toHaveLength(0);
+		expect(valid[0].Easiness).toBe(3.2);
 	});
 
 	it('throws when the YAML is not an array of cards', () => {
