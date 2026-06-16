@@ -8,12 +8,21 @@
  *   npx tsx scripts/add-cards.ts tmp/new-cards.yaml 1
  */
 
-import { PrismaClient, Card, CardPriority, CardGrade, Schedule } from '@prisma/client';
+import {
+	PrismaClient,
+	Card,
+	CardPriority,
+	CardGrade,
+	Schedule
+} from '../src/lib/server/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as fs from 'fs';
 import { parse } from 'yaml';
 
 // Initialize Prisma client
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+});
 
 /**
  * Interface representing card data from the YAML file

@@ -19,7 +19,8 @@
  *   --due               - Filter cards to show only those due today
  */
 
-import { PrismaClient, User, Topic, Deck, Card, Prisma } from '@prisma/client';
+import { PrismaClient, User, Topic, Deck, Card, Prisma } from '../src/lib/server/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { stringify } from 'yaml';
 import { isCardDue, CardSchedulingData } from '../src/lib/sm2.js';
 
@@ -27,7 +28,9 @@ import { isCardDue, CardSchedulingData } from '../src/lib/sm2.js';
 type Command = 'summary' | 'users' | 'topics' | 'decks' | 'cards' | 'card' | 'search' | 'all';
 
 // Initialize Prisma client
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+});
 
 interface CommandOptions {
 	limit: number | null;

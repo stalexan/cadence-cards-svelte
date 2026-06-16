@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '$lib/server/prisma/client';
 import { logger } from './logger';
 import type { RequestEvent } from '@sveltejs/kit';
 

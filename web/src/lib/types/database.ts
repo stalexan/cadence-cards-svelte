@@ -19,7 +19,7 @@
  *   - Import from domain.ts if you need domain types, don't duplicate them
  */
 
-import type { User, Topic, Deck, Card, Schedule, Prisma } from '@prisma/client';
+import type { User, Topic, Deck, Card, Schedule, Prisma } from '$lib/server/prisma/client';
 import type { Grade } from './primitives';
 
 // Re-export the base Prisma types for convenience

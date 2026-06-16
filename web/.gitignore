@@ -1,5 +1,8 @@
 node_modules
 
+# Prisma (generated client; output path set in prisma/schema.prisma)
+/src/lib/server/prisma/
+
 # Output
 .output
 .vercel

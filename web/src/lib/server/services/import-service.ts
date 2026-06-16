@@ -1,5 +1,5 @@
 import { prisma } from '$lib/server/db';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '$lib/server/prisma/client';
 import { importCardsFromYaml, convertYamlCardsToDatabaseFormat } from '$lib/yaml-utils';
 
 /**

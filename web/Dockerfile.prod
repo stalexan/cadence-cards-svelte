@@ -77,18 +77,24 @@ COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
 # Copy scripts directory for admin commands (view-data.ts, create-user.ts, etc.)
 COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
 
-# Copy source lib files that scripts depend on
+# Copy source lib files that scripts depend on. This includes the Prisma 7
+# generated client (output: src/lib/server/prisma), which admin scripts import
+# directly. The SvelteKit server bundle in ./build already has it inlined.
 COPY --from=builder --chown=nodejs:nodejs /app/src/lib ./src/lib
 
-# Copy Prisma client and generated files
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+# Note: Prisma 7 uses driver adapters (@prisma/adapter-pg + pg), so there is no
+# query-engine binary to copy, and the client is no longer emitted into
+# node_modules/.prisma. @prisma/client, @prisma/adapter-pg, and pg are runtime
+# dependencies installed by `npm ci --omit=dev` above.
 
 # Fix ownership of node_modules to ensure nodejs user can access all packages
 RUN chown -R nodejs:nodejs /app/node_modules
 
-# Copy Prisma schema for migrations
+# Copy Prisma schema and config for migrations. Prisma 7 reads the datasource
+# URL and migrations/seed settings from prisma.config.ts (no longer the schema
+# or package.json), so `prisma migrate deploy` in entrypoint.sh needs both.
 COPY --chown=nodejs:nodejs web/prisma ./prisma
+COPY --chown=nodejs:nodejs web/prisma.config.ts ./prisma.config.ts
 
 # Copy VERSION file from project root
 COPY --chown=nodejs:nodejs VERSION ./VERSION

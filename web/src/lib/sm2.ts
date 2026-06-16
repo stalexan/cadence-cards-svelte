@@ -1,4 +1,4 @@
-import type { Card as PrismaCard } from '@prisma/client';
+import type { Card as PrismaCard } from '$lib/server/prisma/client';
 
 /**
  * Implementation of the spaced repetition algorithm. This algorithm is based

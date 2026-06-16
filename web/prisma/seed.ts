@@ -1,4 +1,13 @@
-import { PrismaClient, User, Topic, Deck, Card, Schedule, Prisma } from '@prisma/client';
+import {
+	PrismaClient,
+	User,
+	Topic,
+	Deck,
+	Card,
+	Schedule,
+	Prisma
+} from '../src/lib/server/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'yaml';
@@ -6,7 +15,9 @@ import { hashPassword } from '../src/lib/server/password';
 import { Grade, Priority } from '@/lib/sm2';
 
 // Initialize Prisma client
-const prisma: PrismaClient = new PrismaClient();
+const prisma: PrismaClient = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+});
 
 /**
  * Interface representing card data from the YAML file

@@ -14,13 +14,16 @@
  *   npx tsx scripts/reset-password.ts --id 1
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/lib/server/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from '../src/lib/server/password';
 import * as readline from 'readline';
 import { Writable } from 'stream';
 
 // Initialize Prisma client
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+});
 
 // MuteStream: suppresses all output except the prompt
 class MuteStream extends Writable {

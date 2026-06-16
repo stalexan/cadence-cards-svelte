@@ -4,13 +4,15 @@ Known npm audit findings and their status. Last reviewed: 2026-06-16.
 
 ## Summary
 
-`npm audit` reports **4 vulnerabilities** (4 low), all the `cookie` finding
-below. It does not require immediate action and clears when SvelteKit ships a
-`cookie@^0.7.0` patch (or with SvelteKit 3.0). `npm audit fix --force` is **not**
-safe here — it would downgrade `@sveltejs/kit` to `0.0.30`.
+`npm audit` reports **7 vulnerabilities** (4 low, 3 moderate). None require
+immediate action: all are transitive, and the moderate ones are dev-only (the
+Prisma CLI's local dev tooling, never shipped or run in production).
+`npm audit fix --force` is **not** safe here — it would downgrade
+`@sveltejs/kit` to `0.0.30`.
 
 | Finding | Severity | Real exposure | Cleared by |
 | --- | --- | --- | --- |
+| `@hono/node-server` <1.19.13 | Moderate ×3 | None (dev-only; `prisma` → `@prisma/dev` local server) | A future `prisma` CLI release bumping `@prisma/dev` |
 | `cookie` <0.7.0 | Low ×4 | Low (SvelteKit owns cookie serialization) | A future SvelteKit 2.x patch, or SvelteKit 3.0 |
 
 ## Resolved

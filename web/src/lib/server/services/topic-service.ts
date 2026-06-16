@@ -1,5 +1,5 @@
 import { prisma } from '$lib/server/db';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '$lib/server/prisma/client';
 
 /**
  * Parameters for creating a new topic

@@ -13,11 +13,14 @@
  *   npx tsx scripts/delete-user.ts --email user@example.com
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/lib/server/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import * as readline from 'readline';
 
 // Initialize Prisma client
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+	adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+});
 
 function printUsageAndExit(): never {
 	console.error(

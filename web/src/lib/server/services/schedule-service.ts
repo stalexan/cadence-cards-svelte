@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '$lib/server/prisma/client';
 import { prisma } from '$lib/server/db';
 import { Grade, calculateNextInterval, type CardState } from '$lib/sm2';
 

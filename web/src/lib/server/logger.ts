@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import type { Card } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import type { Card } from '$lib/server/prisma/client';
+import { Prisma } from '$lib/server/prisma/client';
 import { stringify } from 'yaml';
 
 // Log level configuration

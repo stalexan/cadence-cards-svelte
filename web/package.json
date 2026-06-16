@@ -8,7 +8,7 @@
 		"build": "vite build",
 		"start": "node build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
+		"prepare": "prisma generate && svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "vitest run",
@@ -17,15 +17,14 @@
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint ."
 	},
-	"prisma": {
-		"seed": "tsx prisma/seed.ts"
-	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.104.2",
 		"@auth/sveltekit": "^1.11.2",
-		"@prisma/client": "^6.19.3",
+		"@prisma/adapter-pg": "^7.8.0",
+		"@prisma/client": "^7.8.0",
 		"bcryptjs": "^3.0.3",
 		"lucide-svelte": "^0.577.0",
+		"pg": "^8.21.0",
 		"svelte-exmarkdown": "^4.0.3",
 		"yaml": "^2.9.0",
 		"zod": "^4.4.3"
@@ -46,7 +45,7 @@
 		"prettier": "^3.8.4",
 		"prettier-plugin-svelte": "^3.5.2",
 		"prettier-plugin-tailwindcss": "^0.8.0",
-		"prisma": "^6.19.3",
+		"prisma": "^7.8.0",
 		"svelte": "^5.56.3",
 		"svelte-check": "^4.6.0",
 		"tailwindcss": "^4.3.1",
