@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft, MessageCircle } from 'lucide-svelte';
+	import { ArrowLeft, MessageCircle } from '@lucide/svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import type { PageData } from './$types';
 

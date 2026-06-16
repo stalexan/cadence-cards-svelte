@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { untrack } from 'svelte';
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 	import { Priority } from '$lib/sm2';
 	import AutoResizingTextarea from '$lib/components/ui/AutoResizingTextarea.svelte';
 	import type { ActionData } from './$types';

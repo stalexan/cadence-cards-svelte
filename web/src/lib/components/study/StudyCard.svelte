@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowRight, Eye, FileText } from 'lucide-svelte';
+	import { ArrowRight, Eye, FileText } from '@lucide/svelte';
 	import GradingButtons from './GradingButtons.svelte';
 	import ChatInterface from '$lib/components/chat/ChatInterface.svelte';
 	import type { Grade, Priority } from '$lib/sm2';

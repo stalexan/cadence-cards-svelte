@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { ArrowLeft, Upload, CheckCircle, AlertCircle } from 'lucide-svelte';
+	import { ArrowLeft, Upload, CheckCircle, AlertCircle } from '@lucide/svelte';
 	import type { PageData, ActionData } from './$types';
 
 	interface Props {

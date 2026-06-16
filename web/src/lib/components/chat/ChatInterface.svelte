@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MessageList from './MessageList.svelte';
-	import { Send } from 'lucide-svelte';
+	import { Send } from '@lucide/svelte';
 
 	export interface Message {
 		role: 'user' | 'assistant';

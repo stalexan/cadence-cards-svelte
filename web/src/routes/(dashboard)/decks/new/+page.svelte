@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 	import DeckForm from '$lib/components/decks/DeckForm.svelte';
 	import type { PageData, ActionData } from './$types';
 

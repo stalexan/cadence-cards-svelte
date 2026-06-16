@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Dialog from '$lib/components/ui/Dialog.svelte';
-	import { Clipboard, Download, CheckCircle } from 'lucide-svelte';
+	import { Clipboard, Download, CheckCircle } from '@lucide/svelte';
 
 	interface Props {
 		isOpen: boolean;

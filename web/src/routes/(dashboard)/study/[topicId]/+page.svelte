@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 	import StudyCard from '$lib/components/study/StudyCard.svelte';
 	import ProgressBar from '$lib/components/study/ProgressBar.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';

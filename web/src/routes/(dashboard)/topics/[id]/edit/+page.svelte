@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 	import TopicForm from '$lib/components/topics/TopicForm.svelte';
 	import type { PageData, ActionData } from './$types';
 

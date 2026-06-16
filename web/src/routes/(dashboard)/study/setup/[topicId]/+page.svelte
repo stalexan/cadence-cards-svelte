@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { ArrowLeft, Play } from 'lucide-svelte';
+	import { ArrowLeft, Play } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	interface Props {

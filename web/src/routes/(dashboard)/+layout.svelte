@@ -11,7 +11,7 @@
 		LogOut,
 		Menu,
 		X
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import type { LayoutData } from './$types';
 
 	interface Props {

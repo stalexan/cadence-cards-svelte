@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowRight, Folder, BookOpen, FileText, BarChart3 } from 'lucide-svelte';
+	import { ArrowRight, Folder, BookOpen, FileText, BarChart3 } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	interface Props {

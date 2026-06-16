@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet, Component } from 'svelte';
-	import type { Icon as LucideIcon } from 'lucide-svelte';
+	import type { Icon as LucideIcon } from '@lucide/svelte';
 
 	interface Props {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

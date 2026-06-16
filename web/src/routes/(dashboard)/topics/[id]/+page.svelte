@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { ArrowLeft, Plus, Pencil, Trash2, BookOpen, MessageCircle } from 'lucide-svelte';
+	import { ArrowLeft, Plus, Pencil, Trash2, BookOpen, MessageCircle } from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import type { PageData } from './$types';
 

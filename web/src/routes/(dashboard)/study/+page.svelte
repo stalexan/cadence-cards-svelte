@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft, BookOpen } from 'lucide-svelte';
+	import { ArrowLeft, BookOpen } from '@lucide/svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import type { PageData } from './$types';
 

@@ -13,7 +13,7 @@
 		Eye,
 		ArrowUp,
 		ArrowDown
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import ShareModal from '$lib/components/decks/ShareModal.svelte';
 	import Pagination from '$lib/components/ui/Pagination.svelte';

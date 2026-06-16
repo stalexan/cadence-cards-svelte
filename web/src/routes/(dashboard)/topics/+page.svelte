@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { Plus, Folder } from 'lucide-svelte';
+	import { Plus, Folder } from '@lucide/svelte';
 	import TopicList from '$lib/components/topics/TopicList.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Folder, Pencil, Plus, Trash2, BookOpen } from 'lucide-svelte';
+	import { Folder, Pencil, Plus, Trash2, BookOpen } from '@lucide/svelte';
 
 	interface Topic {
 		id: number;

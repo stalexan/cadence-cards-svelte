@@ -10,7 +10,7 @@
 		Eye,
 		Pencil,
 		Trash2
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Pagination from '$lib/components/ui/Pagination.svelte';
 	import { getPaginationInfo } from '$lib/utils';

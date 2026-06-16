@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Grade } from '$lib/sm2';
-	import { CheckCircle, XCircle, HelpCircle } from 'lucide-svelte';
+	import { CheckCircle, XCircle, HelpCircle } from '@lucide/svelte';
 
 	interface Props {
 		onGrade: (grade: Grade) => void;

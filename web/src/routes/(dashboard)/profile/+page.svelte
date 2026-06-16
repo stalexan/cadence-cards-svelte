@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { User, Lock, CheckCircle, AlertCircle } from 'lucide-svelte';
+	import { User, Lock, CheckCircle, AlertCircle } from '@lucide/svelte';
 	import type { PageData, ActionData } from './$types';
 
 	interface Props {

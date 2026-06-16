@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, Plus } from 'lucide-svelte';
+	import { BookOpen, Plus } from '@lucide/svelte';
 
 	interface Deck {
 		id: number;

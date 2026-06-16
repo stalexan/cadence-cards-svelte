@@ -6,7 +6,7 @@
 </script>
 
 <script lang="ts">
-	import { Clipboard, Check } from 'lucide-svelte';
+	import { Clipboard, Check } from '@lucide/svelte';
 	import Markdown from 'svelte-exmarkdown';
 
 	interface Props {

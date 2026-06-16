@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowLeft } from 'lucide-svelte';
+	import { ArrowLeft } from '@lucide/svelte';
 	import ChatInterface from '$lib/components/chat/ChatInterface.svelte';
 	import type { Message } from '$lib/components/chat/MessageList.svelte';
 	import type { PageData } from './$types';
