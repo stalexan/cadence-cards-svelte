@@ -54,6 +54,8 @@ removal). Tests are co-located with source as `*.test.ts` and cover pure logic (
 
 `scripts/check-updates.sh` scans for outdated npm packages and image CVEs (Docker Scout). Apply safe
 npm bumps from inside the container with `npx npm-check-updates --target minor -u && npm install`.
+Some major upgrades are deliberately held back (currently `typescript` 6→7 and `@types/node` 24→26) —
+see `docs/DEPENDENCIES.md` for the rationale and the condition to revisit each before touching them.
 Other ops helpers live in `scripts/`: `backup.sh`, `restore.sh` (DB dump/restore via
 `docker compose exec`). User/data admin are `docker compose exec -it web npx tsx scripts/<X>.ts`
 (see `web/scripts/`).
