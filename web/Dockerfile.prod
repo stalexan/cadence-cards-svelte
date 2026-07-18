@@ -32,8 +32,16 @@ COPY web/ .
 # Copy VERSION file from project root
 COPY VERSION ./VERSION
 
-# Generate Prisma client
-RUN npx prisma generate
+# Generate the Prisma client. Two Prisma 7 quirks make this a two-step command:
+#   1. The `prisma-client` generator emits TypeScript and reads tsconfig.json,
+#      which extends ./.svelte-kit/tsconfig.json — so `svelte-kit sync` must run
+#      first to scaffold that file, or generate fails with "not found".
+#   2. Loading prisma.config.ts resolves env('DATABASE_URL'); generate never
+#      connects to the database, but the variable must be present and parseable,
+#      so pass a throwaway URL scoped to this step. The real DATABASE_URL is
+#      injected at runtime by docker compose.
+RUN npx svelte-kit sync && \
+    DATABASE_URL="postgresql://build:build@localhost:5432/build" npx prisma generate
 
 # Build the application
 RUN npm run build
