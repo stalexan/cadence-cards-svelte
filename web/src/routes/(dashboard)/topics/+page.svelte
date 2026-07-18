@@ -17,8 +17,6 @@
 		id: null
 	});
 
-	let isDeleting = $state(false);
-
 	function handleDeleteClick(id: number) {
 		deleteConfirm = { isOpen: true, id };
 	}
@@ -29,7 +27,6 @@
 		deleteConfirm = { isOpen: false, id: null };
 
 		if (idToDelete) {
-			isDeleting = true;
 			try {
 				const formData = new FormData();
 				formData.append('id', idToDelete.toString());
@@ -45,8 +42,6 @@
 				}
 			} catch (error) {
 				console.error('Failed to delete topic:', error);
-			} finally {
-				isDeleting = false;
 			}
 		}
 	}

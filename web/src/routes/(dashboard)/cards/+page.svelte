@@ -35,12 +35,9 @@
 
 	// Reset to page 1 when filters change
 	$effect(() => {
-		// Access the filter values to track them
-		searchTerm;
-		selectedPriority;
-		selectedTopicId;
-		selectedDeckId;
-		selectedTag;
+		// Reference each filter so this effect re-runs when any of them changes.
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		[searchTerm, selectedPriority, selectedTopicId, selectedDeckId, selectedTag];
 		currentPage = 1;
 	});
 
@@ -116,12 +113,13 @@
 					// Priority A < B < C (alphabetical works)
 					comparison = (a.priority || 'C').localeCompare(b.priority || 'C');
 					break;
-				case 'lastSeen':
+				case 'lastSeen': {
 					// Handle null values - cards never seen go to the end
 					const aDate = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
 					const bDate = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
 					comparison = aDate - bDate;
 					break;
+				}
 			}
 
 			return sortDirection === 'asc' ? comparison : -comparison;
