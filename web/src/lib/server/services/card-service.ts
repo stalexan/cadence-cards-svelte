@@ -12,6 +12,11 @@ export interface CardQueryParams {
 	priority?: Priority;
 	isDue?: boolean;
 	tag?: string;
+	/**
+	 * Include the reverse-direction Schedule in `schedules` (default: forward only).
+	 * Opt-in because the card list pages serialize these objects into client load data.
+	 */
+	includeReverseSchedule?: boolean;
 }
 
 /**
@@ -167,9 +172,9 @@ export class CardService {
 					}
 				},
 				schedules: {
-					where: {
-						isReversed: false // Get forward schedule
-					}
+					// Forward schedule only unless the caller asks for both directions
+					where: params.includeReverseSchedule ? undefined : { isReversed: false },
+					orderBy: { isReversed: 'asc' }
 				}
 			},
 			orderBy: {
@@ -178,7 +183,7 @@ export class CardService {
 		});
 
 		return cards.map((card) => {
-			const forwardSchedule = card.schedules[0];
+			const forwardSchedule = card.schedules.find((s) => !s.isReversed);
 			const schedules: ScheduleData[] = card.schedules.map((s) => ({
 				id: s.id,
 				isReversed: s.isReversed,

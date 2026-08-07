@@ -1,6 +1,6 @@
 import { stringify, parse } from 'yaml';
 import { z } from 'zod';
-import { Priority, Grade } from './sm2';
+import { Priority, Grade, INITIAL_SM2_STATE } from './sm2';
 
 // Validation schema for a card in YAML format
 export const YamlCardSchema = z.object({
@@ -21,15 +21,19 @@ export const YamlCardSchema = z.object({
 	Easiness: z.number().min(1.3).optional().default(2.5),
 	Interval: z.number().int().min(1).optional().default(1),
 	Tags: z.array(z.string()).optional().default([]),
-	// Reverse schedule parameters (for bidirectional decks)
+	// Reverse schedule parameters (for bidirectional decks).
+	// Unlike the forward fields these carry no `.default()`: a forward schedule always exists, but a
+	// reverse one only exists for bidirectional decks. Defaulting here would make "absent from the
+	// YAML" indistinguishable from "present with starting values", and the import path needs that
+	// distinction to decide whether to create a reverse Schedule row at all.
 	ReverseLastSeen: z.string().nullable().optional(),
 	ReverseGrade: z
 		.enum([Grade.CORRECT_PERFECT_RECALL, Grade.CORRECT_WITH_HESITATION, Grade.INCORRECT])
 		.nullable()
 		.optional(),
-	ReverseRepCount: z.number().int().min(0).optional().default(0),
-	ReverseEasiness: z.number().min(1.3).optional().default(2.5),
-	ReverseInterval: z.number().int().min(1).optional().default(1)
+	ReverseRepCount: z.number().int().min(0).optional(),
+	ReverseEasiness: z.number().min(1.3).optional(),
+	ReverseInterval: z.number().int().min(1).optional()
 });
 
 export type YamlCard = z.infer<typeof YamlCardSchema>;
@@ -54,6 +58,77 @@ export type DatabaseCard = {
 	reverseInterval?: number;
 };
 
+/**
+ * A card as returned by the card service, with its per-direction schedules.
+ * Declared structurally so this module stays free of any `$lib/server` import.
+ */
+export type CardWithSchedules = {
+	front: string;
+	back: string;
+	note: string | null;
+	priority: Priority;
+	tags: string[];
+	schedules: {
+		isReversed: boolean;
+		lastSeen: Date | null;
+		grade: Grade | null;
+		repCount: number;
+		easiness: number;
+		interval: number;
+	}[];
+};
+
+/**
+ * Flatten service-shaped cards into the `DatabaseCard` shape the exporter consumes.
+ *
+ * The two shapes are structurally assignable, so passing service cards straight to
+ * `exportCardsToYaml` typechecks — but silently drops every reverse-direction schedule, since the
+ * `reverse*` keys simply never exist. Going through this adapter makes the mapping explicit and
+ * unit-testable.
+ */
+export function toDatabaseCards(cards: CardWithSchedules[]): DatabaseCard[] {
+	return cards.map((card) => {
+		const forward = card.schedules.find((s) => !s.isReversed);
+		const reverse = card.schedules.find((s) => s.isReversed);
+
+		const dbCard: DatabaseCard = {
+			front: card.front,
+			back: card.back,
+			note: card.note,
+			priority: card.priority,
+			tags: card.tags,
+			lastSeen: forward?.lastSeen ?? INITIAL_SM2_STATE.lastSeen,
+			grade: forward?.grade ?? INITIAL_SM2_STATE.grade,
+			repCount: forward?.repCount ?? INITIAL_SM2_STATE.repCount,
+			easiness: forward?.easiness ?? INITIAL_SM2_STATE.easiness,
+			interval: forward?.interval ?? INITIAL_SM2_STATE.interval
+		};
+
+		// Only attach reverse keys when a reverse schedule actually exists — their presence is what
+		// tells the exporter (and later the importer) that this card has a second direction.
+		if (reverse) {
+			dbCard.reverseLastSeen = reverse.lastSeen;
+			dbCard.reverseGrade = reverse.grade;
+			dbCard.reverseRepCount = reverse.repCount;
+			dbCard.reverseEasiness = reverse.easiness;
+			dbCard.reverseInterval = reverse.interval;
+		}
+
+		return dbCard;
+	});
+}
+
+/** True when the card carries reverse-direction SM-2 data. */
+function hasReverseSm2(card: DatabaseCard): boolean {
+	return (
+		card.reverseLastSeen !== undefined ||
+		card.reverseGrade !== undefined ||
+		card.reverseRepCount !== undefined ||
+		card.reverseEasiness !== undefined ||
+		card.reverseInterval !== undefined
+	);
+}
+
 // Metadata for YAML export
 export interface ExportMetadata {
 	formatVersion: string;
@@ -61,6 +136,7 @@ export interface ExportMetadata {
 	creatorName: string | null;
 	exportDate: string;
 	cardCount: number;
+	isBidirectional: boolean;
 }
 
 // Export cards to YAML format
@@ -92,14 +168,14 @@ export function exportCardsToYaml(
 			};
 
 			// Include reverse schedule parameters if present (for bidirectional decks)
-			if (card.reverseLastSeen !== undefined || card.reverseGrade !== undefined) {
+			if (hasReverseSm2(card)) {
 				cardWithSm2.ReverseLastSeen = card.reverseLastSeen
 					? new Date(card.reverseLastSeen).toISOString().split('T')[0]
 					: null;
-				cardWithSm2.ReverseGrade = card.reverseGrade ?? null;
-				cardWithSm2.ReverseRepCount = card.reverseRepCount ?? 0;
-				cardWithSm2.ReverseEasiness = card.reverseEasiness ?? 2.5;
-				cardWithSm2.ReverseInterval = card.reverseInterval ?? 1;
+				cardWithSm2.ReverseGrade = card.reverseGrade ?? INITIAL_SM2_STATE.grade;
+				cardWithSm2.ReverseRepCount = card.reverseRepCount ?? INITIAL_SM2_STATE.repCount;
+				cardWithSm2.ReverseEasiness = card.reverseEasiness ?? INITIAL_SM2_STATE.easiness;
+				cardWithSm2.ReverseInterval = card.reverseInterval ?? INITIAL_SM2_STATE.interval;
 			}
 
 			return cardWithSm2;
@@ -123,6 +199,7 @@ export function exportCardsToYaml(
 # Creator: ${metadata.creatorName || 'Anonymous'}
 # Exported: ${metadata.exportDate}
 # Cards: ${metadata.cardCount}
+# Bidirectional: ${metadata.isBidirectional ? 'Yes' : 'No'}
 # ============================================
 
 `;
@@ -187,20 +264,24 @@ export function convertYamlCardsToDatabaseFormat(yamlCards: YamlCard[], deckId: 
 			deckId
 		};
 
-		// Include reverse schedule data if present (for bidirectional decks)
+		// Include reverse schedule data if present (for bidirectional decks).
+		// Fallbacks are resolved here rather than at the call site so the import service only has to
+		// ask "are the reverse keys present?" — it runs in a transaction and can't be unit tested.
 		const hasReverseData =
 			card.ReverseLastSeen !== undefined ||
 			card.ReverseGrade !== undefined ||
-			card.ReverseRepCount !== undefined;
+			card.ReverseRepCount !== undefined ||
+			card.ReverseEasiness !== undefined ||
+			card.ReverseInterval !== undefined;
 
 		if (hasReverseData) {
 			return {
 				...baseCard,
 				reverseLastSeen: card.ReverseLastSeen ? new Date(card.ReverseLastSeen) : null,
-				reverseGrade: card.ReverseGrade,
-				reverseRepCount: card.ReverseRepCount,
-				reverseEasiness: card.ReverseEasiness,
-				reverseInterval: card.ReverseInterval
+				reverseGrade: card.ReverseGrade ?? INITIAL_SM2_STATE.grade,
+				reverseRepCount: card.ReverseRepCount ?? INITIAL_SM2_STATE.repCount,
+				reverseEasiness: card.ReverseEasiness ?? INITIAL_SM2_STATE.easiness,
+				reverseInterval: card.ReverseInterval ?? INITIAL_SM2_STATE.interval
 			};
 		}
 

@@ -1,6 +1,7 @@
 import { prisma } from '$lib/server/db';
 import { Prisma } from '$lib/server/prisma/client';
 import { importCardsFromYaml, convertYamlCardsToDatabaseFormat } from '$lib/yaml-utils';
+import { INITIAL_SM2_STATE } from '$lib/sm2';
 
 /**
  * Parameters for importing cards
@@ -83,21 +84,24 @@ export class ImportService {
 
 					const schedulesToCreate = [forwardSchedule];
 
-					// Add reverse schedule if deck is bidirectional
-					if (deck.isBidirectional) {
-						// Use reverse data from YAML if available, otherwise use initial values
-						const hasReverseData = 'reverseLastSeen' in cardData || 'reverseGrade' in cardData;
+					// `convertYamlCardsToDatabaseFormat` attaches all five reverse keys together or none
+					// at all, so one is enough to detect them.
+					const hasReverseData = 'reverseEasiness' in cardData;
 
-						const reverseSchedule = {
+					// Add a reverse schedule when the deck is bidirectional, or when the YAML carries
+					// reverse data. The latter matters for shared decks: without it, importing a
+					// bidirectional export into a deck that isn't flagged bidirectional would silently
+					// discard half the study progress. The row stays dormant until the recipient enables
+					// bidirectional, and the backfill in deck-service skips cards that already have one.
+					if (deck.isBidirectional || hasReverseData) {
+						schedulesToCreate.push({
 							isReversed: true,
 							lastSeen: hasReverseData ? (cardData.reverseLastSeen ?? null) : null,
 							grade: hasReverseData ? (cardData.reverseGrade ?? null) : null,
-							repCount: hasReverseData ? (cardData.reverseRepCount ?? 0) : 0,
-							easiness: hasReverseData ? (cardData.reverseEasiness ?? 2.5) : 2.5,
-							interval: hasReverseData ? (cardData.reverseInterval ?? 1) : 1
-						};
-
-						schedulesToCreate.push(reverseSchedule);
+							repCount: hasReverseData ? cardData.reverseRepCount : INITIAL_SM2_STATE.repCount,
+							easiness: hasReverseData ? cardData.reverseEasiness : INITIAL_SM2_STATE.easiness,
+							interval: hasReverseData ? cardData.reverseInterval : INITIAL_SM2_STATE.interval
+						});
 					}
 
 					// Create card with schedules

@@ -130,7 +130,12 @@ export class DashboardService {
 				},
 				lastSeen: {
 					not: null
-				}
+				},
+				// Ignore reverse schedules on decks that aren't bidirectional — they can exist as
+				// dormant rows (preserved when bidirectional is turned off, or created by importing a
+				// bidirectional deck) and must not show up as activity. Filtered in the query, not
+				// after, so `take: 5` still yields five rows.
+				OR: [{ isReversed: false }, { card: { deck: { isBidirectional: true } } }]
 			},
 			orderBy: {
 				lastSeen: 'desc'

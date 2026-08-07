@@ -3,6 +3,8 @@ import {
 	exportCardsToYaml,
 	importCardsFromYaml,
 	convertYamlCardsToDatabaseFormat,
+	toDatabaseCards,
+	type CardWithSchedules,
 	type DatabaseCard,
 	type ExportMetadata
 } from './yaml-utils';
@@ -42,8 +44,49 @@ const metadata: ExportMetadata = {
 	deckName: 'French Basics',
 	creatorName: 'Sean',
 	exportDate: '2024-01-20',
-	cardCount: 2
+	cardCount: 2,
+	isBidirectional: false
 };
+
+// A card from a bidirectional deck: the two directions have diverged, so exporting only the
+// forward numbers would lose real study progress.
+const bidirectionalCard: DatabaseCard = {
+	...sampleCards[0],
+	reverseLastSeen: new Date('2024-02-01T00:00:00.000Z'),
+	reverseGrade: Grade.CORRECT_WITH_HESITATION,
+	reverseRepCount: 2,
+	reverseEasiness: 2.4,
+	reverseInterval: 6
+};
+
+// Shaped like what cardService.getCards returns.
+const serviceCards: CardWithSchedules[] = [
+	{
+		front: 'Bonjour',
+		back: 'Hello',
+		note: 'a greeting',
+		priority: Priority.A,
+		tags: ['french', 'greetings'],
+		schedules: [
+			{
+				isReversed: false,
+				lastSeen: new Date('2024-01-15T00:00:00.000Z'),
+				grade: Grade.CORRECT_PERFECT_RECALL,
+				repCount: 3,
+				easiness: 2.7,
+				interval: 16
+			},
+			{
+				isReversed: true,
+				lastSeen: new Date('2024-02-01T00:00:00.000Z'),
+				grade: Grade.CORRECT_WITH_HESITATION,
+				repCount: 2,
+				easiness: 2.4,
+				interval: 6
+			}
+		]
+	}
+];
 
 describe('exportCardsToYaml / importCardsFromYaml roundtrip', () => {
 	it('preserves core fields without SM-2 params or metadata', () => {
@@ -82,6 +125,125 @@ describe('exportCardsToYaml / importCardsFromYaml roundtrip', () => {
 		expect(valid[0].Interval).toBe(16);
 		// Null lastSeen exports as null and survives the roundtrip.
 		expect(valid[1].LastSeen).toBeNull();
+	});
+
+	it('exports both directions for a bidirectional card', () => {
+		const yaml = exportCardsToYaml([bidirectionalCard], undefined, true);
+		const { valid } = importCardsFromYaml(yaml);
+
+		// Forward values are untouched...
+		expect(valid[0].RepCount).toBe(3);
+		expect(valid[0].Easiness).toBe(2.7);
+		// ...and the reverse direction is its own, distinct set — not a copy of the forward one.
+		expect(valid[0].ReverseLastSeen).toBe('2024-02-01');
+		expect(valid[0].ReverseGrade).toBe(Grade.CORRECT_WITH_HESITATION);
+		expect(valid[0].ReverseRepCount).toBe(2);
+		expect(valid[0].ReverseEasiness).toBe(2.4);
+		expect(valid[0].ReverseInterval).toBe(6);
+	});
+
+	it('exports reverse params for an unstudied reverse schedule', () => {
+		const yaml = exportCardsToYaml(
+			[
+				{
+					...sampleCards[0],
+					reverseLastSeen: null,
+					reverseGrade: null,
+					reverseRepCount: 0,
+					reverseEasiness: 2.5,
+					reverseInterval: 1
+				}
+			],
+			undefined,
+			true
+		);
+
+		// A reverse schedule that exists but has never been reviewed must still round-trip, otherwise
+		// the importer can't tell the deck has a second direction at all.
+		expect(yaml).toContain('ReverseEasiness');
+		const { valid } = importCardsFromYaml(yaml);
+		expect(valid[0].ReverseLastSeen).toBeNull();
+		expect(valid[0].ReverseGrade).toBeNull();
+		expect(valid[0].ReverseRepCount).toBe(0);
+	});
+
+	it('omits reverse params for cards with no reverse schedule', () => {
+		// The original bug in reverse: unidirectional decks must not gain phantom reverse data.
+		const yaml = exportCardsToYaml(sampleCards, undefined, true);
+		expect(yaml).not.toContain('Reverse');
+	});
+
+	it('omits all SM-2 params, forward and reverse, when not requested', () => {
+		const yaml = exportCardsToYaml([bidirectionalCard], undefined, false);
+		expect(yaml).not.toContain('Reverse');
+		expect(yaml).not.toContain('Easiness');
+	});
+
+	it('records deck bidirectionality in the metadata header', () => {
+		const yaml = exportCardsToYaml(sampleCards, { ...metadata, isBidirectional: true });
+		expect(yaml).toContain('# Bidirectional: Yes');
+	});
+});
+
+describe('toDatabaseCards', () => {
+	it('maps forward and reverse schedules onto their respective fields', () => {
+		const [dbCard] = toDatabaseCards(serviceCards);
+
+		expect(dbCard).toMatchObject({
+			front: 'Bonjour',
+			repCount: 3,
+			easiness: 2.7,
+			interval: 16,
+			reverseRepCount: 2,
+			reverseEasiness: 2.4,
+			reverseInterval: 6,
+			reverseGrade: Grade.CORRECT_WITH_HESITATION
+		});
+	});
+
+	it('omits reverse fields entirely when the card has only a forward schedule', () => {
+		const [dbCard] = toDatabaseCards([
+			{ ...serviceCards[0], schedules: [serviceCards[0].schedules[0]] }
+		]);
+
+		// Must be absent, not undefined-valued: key presence is what drives the export guard.
+		expect(dbCard).not.toHaveProperty('reverseEasiness');
+		expect(dbCard).not.toHaveProperty('reverseLastSeen');
+		expect(dbCard.repCount).toBe(3);
+	});
+
+	it('falls back to initial SM-2 state when a card has no schedules', () => {
+		const [dbCard] = toDatabaseCards([{ ...serviceCards[0], schedules: [] }]);
+
+		expect(dbCard).toMatchObject({ repCount: 0, easiness: 2.5, interval: 1, grade: null });
+		expect(dbCard.lastSeen).toBeNull();
+		expect(dbCard).not.toHaveProperty('reverseEasiness');
+	});
+
+	it('finds the forward schedule regardless of array order', () => {
+		const reversedOrder = [serviceCards[0].schedules[1], serviceCards[0].schedules[0]];
+		const [dbCard] = toDatabaseCards([{ ...serviceCards[0], schedules: reversedOrder }]);
+
+		expect(dbCard.easiness).toBe(2.7);
+		expect(dbCard.reverseEasiness).toBe(2.4);
+	});
+
+	it('survives a full service -> export -> import -> database roundtrip', () => {
+		const yaml = exportCardsToYaml(toDatabaseCards(serviceCards), metadata, true);
+		const { valid, invalid } = importCardsFromYaml(yaml);
+		const [dbCard] = convertYamlCardsToDatabaseFormat(valid, 99);
+
+		expect(invalid).toHaveLength(0);
+		expect(dbCard).toMatchObject({
+			deckId: 99,
+			repCount: 3,
+			easiness: 2.7,
+			interval: 16,
+			reverseGrade: Grade.CORRECT_WITH_HESITATION,
+			reverseRepCount: 2,
+			reverseEasiness: 2.4,
+			reverseInterval: 6
+		});
 	});
 });
 
@@ -157,6 +319,34 @@ describe('convertYamlCardsToDatabaseFormat', () => {
 			reverseRepCount: 2,
 			reverseEasiness: 2.4,
 			reverseInterval: 6
+		});
+	});
+
+	it('adds no reverse fields when the YAML has no Reverse* keys', () => {
+		const { valid } = importCardsFromYaml(exportCardsToYaml(sampleCards, undefined, true));
+		const [dbCard] = convertYamlCardsToDatabaseFormat(valid, 7);
+
+		// Absence must survive validation — the import service uses key presence to decide whether to
+		// create a reverse Schedule row.
+		expect(dbCard).not.toHaveProperty('reverseEasiness');
+		expect(dbCard).not.toHaveProperty('reverseRepCount');
+	});
+
+	it('resolves defaults for reverse fields the YAML only partly specifies', () => {
+		const yaml = `
+- Front: Bonjour
+  Back: Hello
+  Priority: A
+  ReverseRepCount: 4
+`;
+		const { valid } = importCardsFromYaml(yaml);
+		const [dbCard] = convertYamlCardsToDatabaseFormat(valid, 7);
+
+		expect(dbCard).toMatchObject({
+			reverseRepCount: 4,
+			reverseEasiness: 2.5,
+			reverseInterval: 1,
+			reverseGrade: null
 		});
 	});
 });

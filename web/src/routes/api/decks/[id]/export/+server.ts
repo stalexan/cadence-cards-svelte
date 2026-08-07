@@ -2,7 +2,7 @@ import type { RequestHandler } from './$types';
 import { requireAuth, handleApiError } from '$lib/server/api-helpers';
 import { deckService, cardService } from '$lib/server/services';
 import { prisma } from '$lib/server/db';
-import { exportCardsToYaml } from '$lib/yaml-utils';
+import { exportCardsToYaml, toDatabaseCards } from '$lib/yaml-utils';
 
 /**
  * GET /api/decks/[id]/export - Export a deck's cards as YAML
@@ -28,8 +28,10 @@ export const GET: RequestHandler = async (event) => {
 			return new Response('Deck not found', { status: 404 });
 		}
 
-		// Get all cards for the deck
-		const cards = await cardService.getCards({ userId, deckId });
+		// Get all cards for the deck, including reverse schedules so bidirectional decks export both
+		// directions. Always fetched: this data is consumed server-side into YAML, never sent to a
+		// client, so there is no payload cost to weigh against the SM-2 flag.
+		const cards = await cardService.getCards({ userId, deckId, includeReverseSchedule: true });
 
 		// Prepare metadata for export
 		const metadata = {
@@ -37,11 +39,12 @@ export const GET: RequestHandler = async (event) => {
 			deckName: deck.name,
 			creatorName: user?.name || null,
 			exportDate: new Date().toISOString().split('T')[0],
-			cardCount: cards.length
+			cardCount: cards.length,
+			isBidirectional: deck.isBidirectional
 		};
 
 		// Convert to YAML with metadata
-		const yamlContent = exportCardsToYaml(cards, metadata, includeSm2Params);
+		const yamlContent = exportCardsToYaml(toDatabaseCards(cards), metadata, includeSm2Params);
 
 		// Create filename
 		const filename = `${deck.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_cards.yaml`;
